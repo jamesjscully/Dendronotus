@@ -1,0 +1,28 @@
+\section*{RESULTS}
+
+\subsection{Circuit architecture: E/I modules as the oscillatory core}
+
+How does a network of non-bursting neurons generate robust rhythmic output?
+The \textit{Dendronotus} swim CPG achieves this through network hysteresis: slow synaptic feedback within contralateral E/I modules creates the history-dependence that individual neurons lack, driving alternation between left and right activity states (Fig.~\ref{fig:ei_mechanism}).
+We constructed a computational model of this four-cell network by integrating validated two-cell subnetworks---half-center oscillators (HCOs) and E/I modules---following the approach developed in \cite{scully2024pairing}.
+
+The circuit architecture distributes rhythmogenic function across the network rather than concentrating it in pacemaker cells (Fig.~\ref{fig:ei_mechanism}A).
+Each E/I module pairs an excitatory Si3 neuron with a contralateral Si2 neuron in a ``twisted'' configuration that crosses the midline: Si3R drives Si2L and Si3L drives Si2R.
+Within each module, Si3 provides excitatory drive through a logistic synapse with relatively fast kinetics, while Si2 returns slower inhibitory feedback through a logistic synapse.
+This delayed negative feedback loop constitutes the conceptual and computational primitive of the swim network---the fundamental building block from which network-level bursting emerges.
+
+Critically, each E/I module is tuned to be ``almost-oscillatory'': when isolated, it exhibits damped oscillations or subthreshold rhythmic fluctuations rather than sustained limit cycles.
+This design means that no single component can generate rhythm autonomously; network coupling is required to recruit the modules into coordinated bursting.
+The two HCOs (Si3L$\leftrightarrow$Si3R and Si2L$\leftrightarrow$Si2R) provide reciprocal inhibition that enforces anti-phase alternation between left and right sides.
+Unlike classical HCO-based CPGs where reciprocal inhibition drives rhythm generation, these connections function primarily as stabilizers---the E/I modules supply the oscillatory drive.
+Weak electrical coupling between E/I partners (Si3R$\leftrightarrow$Si2L and Si3L$\leftrightarrow$Si2R) provides rapid voltage coordination within each module and contributes to network resilience.
+
+The kinetic asymmetry between fast excitation and slow inhibition is visible in the neurotransmitter traces (Fig.~\ref{fig:ei_mechanism}B): excitatory synaptic variables (red) rise and fall rapidly with each spike, while inhibitory variables (blue) accumulate gradually across the burst and decay slowly during interburst intervals.
+This temporal separation means that Si3 excitation recruits Si2 activity quickly, but the inhibition that eventually terminates Si3 firing builds over hundreds of milliseconds---the timescale that sets burst duration.
+
+These synaptic timescales are not arbitrary modeling choices but reflect dynamics observed in the biological circuit.
+Figure~\ref{fig:synaptic_timescales} demonstrates correspondence between model and experimental recordings: current injection into Si2R evokes dual-timescale responses in its network partners.
+The fast $\alpha$-synapse produces IPSPs in Si2L that rise and decay within tens of milliseconds.
+Electrical coupling appears as an immediate voltage deflection in Si3L that precedes the slower chemical response.
+The logistic synapse from Si2 to Si3 accumulates over repeated stimulation, producing delayed inhibition that builds across hundreds of milliseconds.
+Together, fast reciprocal inhibition, slow E/I feedback, and near-instantaneous electrical coupling establish the temporal framework within which network bursting emerges.

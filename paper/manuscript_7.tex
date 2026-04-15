@@ -1,0 +1,129 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%  Manuscript 7 - Dendronotus CPG Model
+%%%  Based on Cell Press LaTeX template v1.10
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass[12pt,letterpaper]{article}
+\usepackage[a4paper, total={7in, 10in}]{geometry}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{graphicx}
+\usepackage{helvet}
+\usepackage{authblk}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{orcidlink}
+\usepackage[super,comma,sort&compress]{natbib}
+\bibliographystyle{numbered}
+\usepackage[right]{lineno} \linenumbers
+
+\makeatletter
+\renewcommand{\maketitle}{\bgroup\setlength{\parindent}{0pt}
+\begin{flushleft}
+  \textbf{\@title}
+
+  \@author
+\end{flushleft}\egroup}
+\makeatother
+
+%%% Title
+\title{Network oscillations explain flexible burst frequency control in the Dendronotus Iris swim central pattern generator}
+\date{}
+
+%%% Authors and Affiliations
+\author[1,2,5,*]{James Scully}
+\author[3]{Akira Sakurai}
+\author[4]{Paul S. Katz}
+\author[1,2]{Andrey L. Shilnikov}
+
+\affil[1]{Neuroscience Institute, Georgia State University, 100 Piedmont Ave., Atlanta, GA 30303, USA}
+\affil[2]{Department of Mathematics \& Statistics, Georgia State University, 25 Park Pl., Atlanta, GA 30303, USA}
+\affil[3]{Department of Biology, Georgia State University, Atlanta, GA 30303, USA}
+\affil[4]{Department of Biology, University of Massachusetts Amherst, Amherst, MA, USA}
+\affil[5]{Lead contact}
+
+\affil[*]{Correspondence: jamesjscully@gmail.com}
+
+\begin{document}
+
+\maketitle
+
+%%% Summary
+\input{sections/summary}
+
+%%% Keywords
+\section*{KEYWORDS}
+
+central pattern generator, CPG, Dendronotus iris, neural oscillation, synaptic dynamics, frequency modulation, half-center oscillator, computational model
+
+%%% Introduction
+\input{sections/introduction}
+
+%%% Results
+\input{sections/results_subcircuits}
+\input{sections/results_assembly}
+\input{sections/results_validations}
+\input{sections/results_control}
+
+%%% Discussion
+\input{sections/discussion}
+
+%%% Resource Availability
+\input{sections/resource_availability}
+
+%%% Acknowledgments
+\section*{ACKNOWLEDGMENTS}
+
+We thank the Brains \& Behavior Initiative at Georgia State University for support through a Brains \& Behavior pilot grant and for a Brains \& Behavior graduate fellowship awarded to J.~Scully.
+We are grateful to the current and former members of the Shilnikov NeurDS (Neuro-Dynamical Systems) laboratory, including J.~Bosonetto, D.~Bloom, C.~Hinsley, Y.~Keleta, and Drs.~H.~Ju, D.~Alacam, and K.~Pusuluri, for many helpful and inspiring discussions.
+This work was supported by the National Science Foundation (NSF) under award IOS--1455527.
+
+%%% Author Contributions
+\section*{AUTHOR CONTRIBUTIONS}
+
+Conceptualization, J.S. and A.L.S.;
+Methodology, J.S. and A.L.S.;
+Software, J.S.;
+Investigation, J.S.;
+Writing -- Original Draft, J.S.;
+Writing -- Review \& Editing, J.S., A.S., P.S.K., and A.L.S.;
+Visualization, J.S.;
+Supervision, A.L.S.;
+Funding Acquisition, A.L.S.
+
+%%% Declaration of Interests
+\section*{DECLARATION OF INTERESTS}
+
+The authors declare no competing interests.
+
+%%% Declaration of Generative AI
+\section*{DECLARATION OF GENERATIVE AI AND AI-ASSISTED TECHNOLOGIES}
+
+During the preparation of this work, the authors used AI as a writing assistant and expedient editing of code for figures.
+All ideas and concepts are our own.
+The authors reviewed and edited all AI-generated content and take full responsibility for the content of the publication.
+
+%%% Supplemental Information Index
+\section*{SUPPLEMENTAL INFORMATION INDEX}
+
+\begin{description}
+  \item Figures S1--S2 and their legends in a PDF
+  \item Table S1. Model parameters
+\end{description}
+
+\newpage
+
+%%% Main Figure Titles and Legends
+\input{sections/figures}
+
+\newpage
+
+%%% References
+\bibliography{references}
+
+\newpage
+
+%%% STAR Methods
+\input{sections/star_methods}
+
+\end{document}

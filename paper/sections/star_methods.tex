@@ -1,0 +1,338 @@
+\section*{STAR METHODS}
+
+%%% Key Resources Table
+\subsection*{Key resources table}
+
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{REAGENT or RESOURCE} & \textbf{SOURCE} & \textbf{IDENTIFIER} \\
+\hline
+\multicolumn{3}{|l|}{\textbf{Software and algorithms}} \\
+\hline
+MATLAB & MathWorks & https://www.mathworks.com/products/matlab \\
+\hline
+Custom simulation code & This paper & https://github.com/jamesjscully/Dendronotus \\
+\hline
+\end{tabular}
+
+
+%%% Method Details
+\subsection*{Method details}
+
+\subsubsection*{Neuron model}
+
+The dynamics of the membrane potential, $V$, is governed by the following equation:
+\begin{equation}
+ 	C_{m} {V}^\prime = -I_{I} - I_K - I_{T}  - I_{KCa} -  I_{h}  - I_{leak}  - I_{syn},
+\end{equation}
+where $C_m = 1$\,nF is the membrane capacitance.
+
+The fast inward sodium and calcium $I_{I}$-current is given by
+\begin{equation}
+I_{I}=g_{I}\,h\, m^{3}_{\infty}(V)(V-E_{I}),
+\end{equation}
+with the reversal potential $E_{I}=30$mV and the maximal conductance value $g_{I}=4$nS, and where the infinite functions are given by
+\begin{align}
+ m_{\infty}(V) &= \frac{\alpha_{m}(V)}{\alpha_{m}(V) +\beta_{m}(V)},   \\
+ \alpha_{m}(V) &= 0.1 \frac{50-V_s}{-1+e^{(50-V_s)/10}}, \\
+ \beta_{m}(V) &= 4 e^{(25-V_s)/18}.
+\end{align}
+
+The dynamics of its inactivation gating variable $h$ is given by
+\begin{align}
+ {h}^\prime &=  \frac{h_{\infty}(V)-h}{ {\tau_{h}(V)} }, \\
+h_{\infty}(V) &= \frac{\alpha_{h}(V)}{\alpha_{h}(V) +\beta_{h}(V)}, \\
+ \tau_{h}(V) &= \frac{12.5}{\alpha_{h}(V) +\beta_{h}(V)},
+\end{align}
+where
+\begin{align}
+ \alpha_{h}(V) &= 0.07 e^{(25-V_s)/20}, \\
+ \beta_{h}(V) &= \frac{1}{1+e^{(55-V_s)/10}}, \\
+ V_s &= \frac{127V+8265}{105}{\rm mV}.
+\end{align}
+
+The fast potassium $I_K$-current is given by the equation
+\begin{equation}
+I_K=g_{K} n^{4}(V-E_{K}),
+\end{equation}
+with the reversal potential $E_{K}=-75$mV and the maximal conductance set as $g_K=0.3$nS.
+The dynamics of inactivation gating variable are described by
+\begin{align}
+{n}^\prime &= \frac{n_{\infty}(V)-n}{\tau_{n}(V)}, \\
+n_{\infty}(V) &= \frac{\alpha_{n}(V)}{\alpha_{n}(V) +\beta_{n}(V)}, \\
+\tau_{n}(V) &= \frac{12.5}{\alpha_{n}(V) +\beta_{n}(V)}, \\
+\alpha_{n}(V) &= 0.01 \frac{55-V_s}{e^{(55-V_s)/10}-1}, \\
+\beta_{n}(V) &= 0.125 e^{(45-V_s)/80}.
+\end{align}
+
+The rapidly depolarizing h-current is given by
+\begin{equation}
+I_{h}=g_{h} \frac{y (V-E_{h})}{(1+e^{-(V-63)/7.8})^3},
+\end{equation}
+with $E_{h}=70$mV, and $g_h=0.0006$nS; the dynamics of its $y$-activation probability is described by
+\begin{equation}
+{y}^\prime = \frac{1}{2} \left [ \frac{1}{1+e^{10(V-50)}}-y \right ]/ \left [ 7.1+\frac{10.4}{1+e^{(V+68)/2.2}} \right ].
+\end{equation}
+
+The leak current is given by
+\begin{equation}
+I_{leak} =g_{L} (V-E_{L}),
+\end{equation}
+with $E_{L} =-40{\rm mV}$, and $g_{L}=0.003{\rm nS}$.
+
+The sub-group of slow currents in the model includes the TTX-resistant sodium and calcium $I_{T}$-current given by
+\begin{equation}
+ I_{T} = g_{T} x (V-E_{I}),
+\end{equation}
+with $E_{I} =30{\rm mV}$ and $g_{T}=0.01{\rm nS}$, where the dynamics of its slow activation variable are described by
+\begin{align}
+{x}^\prime &= \frac{x_{\infty}(V)-x}{\tau_{x}}, \\
+x_{\infty} &= \frac{1}{1+e^{-0.15(V+50-\Delta_x)}},
+\end{align}
+with the time constant $\tau_{x} = 100$\,ms.
+
+The slowest outward ${\rm Ca}^{2+}$ activated $K^+$ current given by
+\begin{equation}
+I_{KCa} =g_{KCa}\frac{[\rm Ca]_i}{0.5+[\rm Ca]_i}(V-E_{K}),
+\end{equation}
+with $E_{K}=-75\mbox{mV}$, and $g_{KCa}=0.03$, where the dynamics of intracellular calcium concentration is governed by
+\begin{equation}
+{[\rm Ca]}^\prime  =  \rho \left ( K_{c}\, x\, (E_{\rm Ca}-V + \Delta_{\rm Ca})-[\rm Ca] \right  )
+\end{equation}
+with the Nernst reversal potential $E_{Ca}=140$mV, and small constants $\rho= 0.0003{\rm ms}^{-1}$ and $K_c=0.0085{\rm mV}^{-1}$.
+
+
+\subsubsection*{Synapse models}
+
+\paragraph{Fast $\alpha$-synapses.}
+Fast excitatory and inhibitory synapses are modeled using the $\alpha$-synapse formalism \cite{destexhe1994synthesis, destexhe1998kinetic, Rall67}.
+The synaptic current is given by
+\begin{equation}
+I_{syn} = g_{syn} \cdot s \cdot (V_{post} - E_{syn}),
+\end{equation}
+where $g_{syn}$ is the maximal synaptic conductance, $s$ is the synaptic gating variable, and $E_{syn}$ is the reversal potential ($E_{syn} = +40$mV for excitation, $E_{syn} = -80$mV for inhibition).
+
+The synaptic gating variable $s$ follows
+\begin{align}
+{s}^\prime &= \alpha \cdot f_{\infty}(V_{pre}) \cdot (1 - s) - \beta \cdot s,
+\end{align}
+where $f_{\infty}(V_{pre})$ is a sigmoid function of presynaptic voltage:
+\begin{equation}
+f_{\infty}(V_{pre}) = \frac{1}{1 + e^{-k(V_{pre} - V_{th})}},
+\end{equation}
+with threshold $V_{th} = -20$\,mV and slope $k = 20$\,mV$^{-1}$.
+
+\paragraph{Logistic synapses.}
+The contralateral E/I module synapses (both Si3$\to$Si2 excitation and Si2$\to$Si3 inhibition) use a novel logistic synapse model that captures synaptic accumulation dynamics:
+\begin{equation}
+{s}^\prime = \alpha \cdot s \cdot (1-s) \cdot f_{\infty}(V_{pre}) - \beta \cdot (s - s_0),
+\end{equation}
+where $f_{\infty}(V_{pre})$ is the same sigmoid function of presynaptic voltage, and $s_0 \ll 1$ is a baseline release rate.
+The key difference from the standard $\alpha$-synapse is the $s(1-s)$ term, which creates logistic growth dynamics: the synapse accumulates slowly when $s$ is small, reaches maximal accumulation rate at $s = 0.5$, and saturates as $s$ approaches 1.
+The Si2$\to$Si3 inhibitory synapses use slower kinetics ($\alpha = 0.012$\,ms$^{-1}$) that produce summation on timescales of hundreds of milliseconds, setting the burst period.
+The Si3$\to$Si2 excitatory synapses use faster kinetics ($\alpha = 0.05$\,ms$^{-1}$) but retain the logistic accumulation dynamics for consistent E/I module behavior.
+
+\paragraph{Synaptic normalization.}
+Without normalization, the synaptic gating variable $s$ is bounded between 0 and a maximum value that depends on the kinetic parameters $\alpha$ and $\beta$.
+Since the synaptic conductance is proportional to $g_{syn} \cdot s$, changing $\alpha$ and $\beta$ would inadvertently affect the effective synaptic strength, creating unwanted codependencies between kinetic timescales and synaptic amplitude.
+To decouple synaptic strength from kinetic parameters, we normalize the synaptic current:
+\begin{equation}
+I_{syn} = g_{syn} \cdot \frac{s}{\text{scale}_s} \cdot (V_{post} - E_{syn}),
+\end{equation}
+where the scaling factors depend on synapse type:
+\begin{align}
+\text{scale}_{\text{fast}} &= \frac{\alpha}{\alpha + \beta} \quad \text{(for $\alpha$-synapses)}, \\
+\text{scale}_{\text{slow}} &= \frac{\alpha - \beta}{\alpha} \quad \text{(for logistic synapses)}.
+\end{align}
+These factors normalize the theoretical asymptotic limit to unity for all parameter combinations, ensuring that $g_{syn}$ directly represents the maximum synaptic conductance independent of the kinetic parameters.
+
+
+\subsubsection*{Network connectivity}
+
+The \textit{Dendronotus iris} swim CPG model consists of four core interneurons (Si2L, Si2R, Si3L, Si3R) with the following synaptic connections:
+\begin{itemize}
+    \item \textbf{Contralateral excitation}: Si3R$\to$Si2L and Si3L$\to$Si2R (logistic synapses)
+    \item \textbf{Contralateral inhibition}: Si2L$\to$Si3R and Si2R$\to$Si3L (logistic synapses)
+    \item \textbf{Reciprocal Si3 inhibition}: Si3L$\longleftrightarrow$Si3R ($\alpha$-synapses)
+    \item \textbf{Reciprocal Si2 inhibition}: Si2L$\longleftrightarrow$Si2R ($\alpha$-synapses)
+    \item \textbf{Electrical coupling}: Si3R$\longleftrightarrow$Si2L and Si3L$\longleftrightarrow$Si2R (gap junctions)
+\end{itemize}
+
+The command neuron Si1 provides neuromodulatory input that scales the effective strength of Si3$\to$Si2 excitation, enabling frequency control.
+
+
+\subsubsection*{Network assembly and calibration}
+
+We assembled the four-cell swim CPG network by integrating validated two-cell subnetworks---specifically half-center oscillators (HCOs) and excitatory-inhibitory (E/I) modules---following the approach in \cite{scully2024pairing}.
+Synaptic kinetics for mutual inhibition and E/I interactions were matched to previously characterized modules.
+
+Cellular parameters were preserved from prior models, with the exception of Si3 neurons, whose endogenous excitability was increased by shifting the voltage threshold $\Delta[\text{Ca}]$ by 5\,mV to promote spiking.
+
+\paragraph{Almost-oscillatory sub-circuits.}
+By ``almost-oscillatory'' sub-circuits, we mean configurations that exhibit damped oscillatory behavior or subthreshold rhythmic fluctuations when isolated, but do not sustain stable limit-cycle oscillations without network interactions.
+These sub-circuits lie close to oscillatory regimes in parameter space, near bifurcations that separate quiescent from rhythmic states, such that modest network coupling can recruit them into coordinated bursting.
+This design principle contrasts with CPG architectures built from intrinsically bursting pacemaker neurons that generate robust oscillations independently of network context.
+
+\paragraph{Calibration protocol.}
+Network calibration was performed by symmetrically tuning synaptic conductances using the following protocol:
+\begin{enumerate}
+    \item \textbf{Configuration:} Pre- and postsynaptic voltage variables were assigned according to the known swim circuits of \textit{Dendronotus iris} \cite{SakuraiKatz2016}.
+    \item \textbf{Initialization:} All cells were set to a quiescent state with synaptic conductances at zero.
+    \item \textbf{Drive:} Synaptic drive was applied to Si3 until the excitatory postsynaptic gating variable $s$ showed sustained accumulation, measured by local minima rising above 0.1 and saturating over 0.5--3\,s.
+    \item \textbf{Excitation:} Excitatory conductance from Si3 to contralateral Si2 was increased until inhibitory $s$ (Si2-to-Si2) reached minima above 0.1 over 0.5--3\,s.
+    \item \textbf{Slow inhibition:} Inhibitory conductance in the E/I pair was raised until Si3 frequency decreased by 50\% over 1\,s.
+    \item \textbf{Fast inhibition:} Inhibitory conductances for both HCOs (Si2L--Si2R and Si3L--Si3R) were elevated until a stable burst rhythm emerged, visually matching empirical voltage traces \cite{SakuraiKatz2016}.
+    \item \textbf{Fine-tuning:} Excitability was adjusted slightly (e.g., $\Delta[\text{Ca}] < 2$\,mV) to achieve a duty cycle matching experimental observations.
+\end{enumerate}
+
+
+\subsubsection*{Model validation}
+
+To validate the CPG model, we performed direct current injection into the voltage equation of selected interneurons, adding a current term to the right-hand side of the membrane potential equation and varying its amplitude to mimic experimental perturbations.
+No additional parameter tuning, optimization, or fitting procedures were employed during these tests.
+This approach ensures that the model's responses reflect its intrinsic dynamics and structure, maintaining the integrity of the validation process.
+
+All validation responses shown are typical: simulations use random initial conditions for the four interneurons and synapses, plus calibrated colored noise (up to 20 Hz), to probe robustness.
+This explains trial-to-trial variability in initial phase and demonstrates that the model's behavior is not dependent on specific initial conditions.
+
+Validation focuses on qualitative reproduction of experimental phenomena through systematic comparison of model output with published voltage traces and perturbation responses \cite{SakuraiKatz2016, sakurai2019command, sakurai2022bursting}.
+Quantitative parameter fitting was not attempted due to limited availability of quantitative measurements in the experimental literature.
+Our approach prioritizes mechanistic insight---demonstrating that the proposed circuit architecture and synaptic dynamics can reproduce the diversity of observed behaviors---over numerical precision in matching specific parameter values.
+
+
+\subsubsection*{Neuromodulation}
+
+Si1 neurons modulate the Si3$\to$Si2 excitatory synapses through a dynamic modulatory variable $s_m \in [0, 1]$ that evolves according to
+\begin{equation}
+{s_m}^\prime = \alpha_m \cdot s_m \cdot (1 - s_m) \cdot f_{\infty}(V_{Si1}) - \beta_m \cdot (s_m - s_{m}^0),
+\end{equation}
+where $f_{\infty}(V_{Si1})$ is the sigmoid function of the Si1 presynaptic voltage, and $0 < s_m^0 \ll 1$ is a baseline value.
+
+In the MATLAB implementation, modulation is normalized by
+\begin{equation}
+\text{scale}_m = \frac{\alpha_m - \beta_m}{\alpha_m},
+\end{equation}
+and the gain parameter $g_m$ enters through the factor $(1 + g_m s_m / \text{scale}_m)$.
+When $s_m = 0$, the synapse operates at baseline strength.
+We compare two modulatory mechanisms that target distinct biophysical processes:
+
+\paragraph{Postsynaptic modulation.}
+The modulatory variable scales the maximal conductance of the logistic Si3$\to$Si2 synapse directly:
+\begin{equation}
+I_{syn} = g_{syn} \cdot \left(1 + g_m \frac{s_m}{\text{scale}_m}\right) \cdot \frac{s}{\text{scale}_s} \cdot (V_{post} - E_{syn}),
+\end{equation}
+We term this ``postsynaptic'' because the synaptic conductance $g_{syn}$ characterizes the electrical properties of the postsynaptic membrane---specifically, the density and conductance of postsynaptic receptors and ion channels that determine the amplitude of the postsynaptic response.
+
+\paragraph{Presynaptic modulation.}
+Alternatively, the modulatory variable scales the accumulation rate $\alpha$ of the same logistic synapse:
+\begin{equation}
+{s}^\prime = \alpha \cdot \left(1 + g_m \frac{s_m}{\text{scale}_m}\right) \cdot s \cdot (1-s) \cdot f_{\infty}(V_{pre}) - \beta \cdot (s - s_0).
+\end{equation}
+We term this ``presynaptic'' because the gating variable $s(t)$ models the dynamics of neurotransmitter release, a process that occurs at the presynaptic terminal.
+Modulating the $\alpha$ parameter affects the rate at which neurotransmitter accumulates, mimicking biological mechanisms such as changes in vesicle priming, calcium sensitivity, or release probability.
+
+Both mechanisms increase effective synaptic strength, but presynaptic modulation additionally accelerates synaptic accumulation, producing qualitatively different effects on network dynamics as explored in the Results.
+
+
+\subsubsection*{Simulation and analysis tools}
+
+All simulations were performed using custom MATLAB code.
+Differential equations were integrated using fixed-step forward Euler updates with a timestep of 0.1\,ms and traces saved every 2\,ms.
+Burst detection and period measurement were performed using threshold-crossing algorithms on the membrane voltage traces.
+
+
+%%% Model Parameters
+\subsection*{Model parameters}
+
+Table~\ref{tab:intrinsic_params} lists intrinsic neuronal parameters, which are identical across all four interneurons except where noted.
+Table~\ref{tab:synaptic_params} lists synaptic parameters for network connectivity.
+
+\begin{table}[htbp]
+\centering
+\caption{Intrinsic neuronal parameters}
+\label{tab:intrinsic_params}
+\begin{tabular}{|l|l|l|l|}
+\hline
+\textbf{Parameter} & \textbf{Description} & \textbf{Value} & \textbf{Units} \\
+\hline
+\multicolumn{4}{|l|}{\textit{Fast inward current ($I_I$)}} \\
+\hline
+$g_I$ & Maximal conductance & 4 & nS \\
+$E_I$ & Reversal potential & 30 & mV \\
+\hline
+\multicolumn{4}{|l|}{\textit{Fast potassium current ($I_K$)}} \\
+\hline
+$g_K$ & Maximal conductance & 0.3 & nS \\
+$E_K$ & Reversal potential & $-75$ & mV \\
+\hline
+\multicolumn{4}{|l|}{\textit{Leak current ($I_{leak}$)}} \\
+\hline
+$g_L$ & Maximal conductance & 0.003 & nS \\
+$E_L$ & Reversal potential & $-40$ & mV \\
+\hline
+\multicolumn{4}{|l|}{\textit{TTX-resistant current ($I_T$)}} \\
+\hline
+$g_T$ & Maximal conductance & 0.01 & nS \\
+$\tau_x$ & Activation time constant & 100 & ms \\
+$\Delta_x$ & Voltage shift & $-4$ & mV \\
+\hline
+\multicolumn{4}{|l|}{\textit{Calcium-activated potassium current ($I_{KCa}$)}} \\
+\hline
+$g_{KCa}$ & Maximal conductance & 0.03 & nS \\
+$\rho$ & Calcium dynamics rate & 0.0003 & ms$^{-1}$ \\
+$K_c$ & Calcium scaling & 0.0085 & mV$^{-1}$ \\
+$E_{Ca}$ & Calcium reversal potential & 140 & mV \\
+\hline
+\multicolumn{4}{|l|}{\textit{h-current ($I_h$)}} \\
+\hline
+$g_h$ & Maximal conductance & 0.0006 & nS \\
+$E_h$ & Reversal potential & 70 & mV \\
+\hline
+\multicolumn{4}{|l|}{\textit{Calcium shift ($\Delta_{Ca}$) --- sets intrinsic excitability}} \\
+\hline
+ & Si3L, Si3R & $-55$, $-60$ & mV \\
+ & Si2L, Si2R & $-30$, $-22$ & mV \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Synaptic and network parameters}
+\label{tab:synaptic_params}
+\begin{tabular}{|l|l|l|l|l|}
+\hline
+\textbf{Synapse} & \textbf{Type} & $\boldsymbol{\alpha}$ \textbf{(ms$^{-1}$)} & $\boldsymbol{\beta}$ \textbf{(ms$^{-1}$)} & $\boldsymbol{g_{syn}}$ \textbf{(nS)} \\
+\hline
+\multicolumn{5}{|l|}{\textit{Contralateral E/I modules}} \\
+\hline
+Si3R$\to$Si2L & Logistic (exc) & 0.05 & 0.001 & 0.005 \\
+Si3L$\to$Si2R & Logistic (exc) & 0.05 & 0.001 & 0.005 \\
+Si2L$\to$Si3R & Logistic (inh) & 0.012 & 0.001 & 0.01 \\
+Si2R$\to$Si3L & Logistic (inh) & 0.012 & 0.001 & 0.01 \\
+\hline
+\multicolumn{5}{|l|}{\textit{Reciprocal inhibition (half-center oscillators)}} \\
+\hline
+Si3L$\leftrightarrow$Si3R & $\alpha$-synapse (inh) & 0.01 & 0.004 & 0.02 \\
+Si2L$\leftrightarrow$Si2R & $\alpha$-synapse (inh) & 0.01 & 0.005 & 0.02 \\
+\hline
+\multicolumn{5}{|l|}{\textit{Electrical coupling (gap junctions)}} \\
+\hline
+Si3R$\leftrightarrow$Si2L & Gap junction & \multicolumn{2}{l|}{---} & 0.002 \\
+Si3L$\leftrightarrow$Si2R & Gap junction & \multicolumn{2}{l|}{---} & 0.002 \\
+\hline
+\end{tabular}
+\vspace{0.5em}
+
+\small
+Reversal potentials: $E_{exc} = +40$\,mV (excitatory), $E_{inh} = -80$\,mV (inhibitory).
+Logistic synapses use $s_0 = 0.0001$ as baseline.
+Sigmoid function: $f_{\infty}(V) = 1/(1 + e^{-k(V - V_{th})})$ with $V_{th} = -20$\,mV and slope $k = 20$\,mV$^{-1}$.
+\end{table}
+
+
+%%% Quantification and Statistical Analysis
+\subsection*{Quantification and statistical analysis}
+
+Burst periods were computed as the time interval between successive burst onsets in the Si3 neurons.
+Mean periods and variability were calculated over multiple burst cycles after discarding initial transients.

@@ -1,0 +1,38 @@
+\subsection{Top-down control and neuromodulation}
+
+In the biological circuit, Si3 neurons are not intrinsically oscillatory but receive tonic excitatory drive from Si1 command neurons that initiate and sustain swim episodes \cite{sakurai2019command}.
+We now examine a five-cell network configuration that incorporates Si1 control, with Si3 neurons set to quiescent baseline states that require Si1 excitation to become active.
+
+\subsubsection{Si1 gating of network activity}
+
+In \textit{Dendronotus iris}, Si1 neurons function as command-like neurons that initiate and terminate swim episodes \cite{sakurai2019command}.
+They provide tonic excitatory drive to both Si3 neurons, which in turn activate the four-cell CPG through the contralateral E/I modules.
+This hierarchical organization allows Si1 neurons to gate network state transitions while intrinsic CPG dynamics shape burst structure and left-right alternation.
+
+Figure~\ref{fig:si1_neuromod}A--C summarizes the biological and modeling context for Si1-mediated control.
+Panel A shows the network architecture: Si1 provides excitatory drive to both Si3 neurons and modulates the Si3$\to$Si2 excitatory pathway.
+Panel B shows a representative biological Si1/Si2 burst from preparation 130618-03, illustrating that elevated Si1 firing coincides with Si2 bursting.
+Panel C shows a representative model trace from the presynaptic modulation regime with the same qualitative sequence: Si1/V0 spiking rises first and Si2 bursting follows.
+Together these panels motivate treating Si1 activity as both a gating signal and a frequency-control signal.
+
+\subsubsection{Neuromodulatory burst frequency control}
+
+Beyond gating network activity, Si1 neurons regulate burst frequency in an activity-dependent manner.
+Experimental recordings demonstrate that swim frequency increases with Si1 firing rate, establishing that the command signal encodes not merely on/off state but graded frequency information \cite{sakurai2019command}.
+This observation motivates our exploration of how neuromodulation of synaptic properties in the Si3$\to$Si2 excitatory pathway could implement such graded control.
+We compared two distinct mechanisms to determine which provides appropriate frequency dynamics.
+
+Figure~\ref{fig:si1_neuromod}D--F presents the neuromodulation comparison.
+Panel D shows presynaptic modulation, where the Si1-driven modulatory variable affects the accumulation rate parameter $\alpha$ of the logistic Si3$\to$Si2 excitatory synapse.
+This produces smooth, graded changes in burst frequency that scale predictably with modulatory input strength.
+
+Panel E shows the corresponding post-drive behavior.
+Presynaptic modulation shuts the rhythm off when the drive is withdrawn, whereas postsynaptic modulation tends to leave the network in a persistent bursting state.
+
+Panel F compares the biological relationship between Si1 firing rate and burst frequency with matched model measurements.
+The presynaptic model spans the observed trend more naturally, while the postsynaptic model remains steeper and more weakly terminating.
+
+Presynaptic modulation provides smooth, stable frequency control appropriate for an adaptable locomotor CPG that must accommodate developmental scaling and environmental adjustments.
+Postsynaptic modulation's high sensitivity may be less suitable for sustained swimming but could enable rapid behavioral state switching.
+These computational findings generate a testable prediction: if Si1-driven frequency control operates through presynaptic mechanisms, pharmacological manipulation of release machinery should produce graded frequency changes, whereas manipulation of postsynaptic receptors should produce more abrupt transitions.
+Such experiments would distinguish between these modulatory strategies and inform our understanding of how command neurons regulate CPG output.

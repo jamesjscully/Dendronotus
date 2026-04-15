@@ -1,0 +1,31 @@
+\BOOKMARK [0][-]{section*.2}{Slow synaptic dynamics promote resilience and regulate burst frequency in a Dendronotus iris swim CPG model}{}% 2
+\BOOKMARK [1][-]{section*.1}{Abstract}{section*.2}% 1
+\BOOKMARK [1][-]{section*.3}{Introduction}{section*.2}% 3
+\BOOKMARK [1][-]{section*.4}{Methods and models}{section*.2}% 4
+\BOOKMARK [2][-]{section*.5}{Model of the swim interneuron \(SiN\)}{section*.4}% 5
+\BOOKMARK [2][-]{section*.6}{Synaptic models}{section*.4}% 6
+\BOOKMARK [2][-]{section*.7}{Four-Cell Network Assembly}{section*.4}% 7
+\BOOKMARK [2][-]{section*.8}{Validations}{section*.4}% 8
+\BOOKMARK [2][-]{section*.9}{Control and neuromodulation}{section*.4}% 9
+\BOOKMARK [3][-]{section*.10}{Si1 command neuron control}{section*.9}% 10
+\BOOKMARK [3][-]{section*.11}{Neuromodulatory mechanisms}{section*.9}% 11
+\BOOKMARK [1][-]{section*.12}{Results}{section*.2}% 12
+\BOOKMARK [2][-]{section*.13}{Network assembly and architecture}{section*.12}% 13
+\BOOKMARK [3][-]{section*.14}{Rhythm emergence from progressive network assembly}{section*.13}% 14
+\BOOKMARK [2][-]{section*.15}{Model validation through perturbation experiments}{section*.12}% 15
+\BOOKMARK [3][-]{section*.16}{Resilience to pulse perturbations \(Fact-check list I\)}{section*.15}% 16
+\BOOKMARK [3][-]{section*.17}{Symmetric bilateral perturbations \(Fact-check list II\)}{section*.15}% 17
+\BOOKMARK [3][-]{section*.18}{Validation of synaptic dynamics and electrical coupling \(Fact-check list III\)}{section*.15}% 18
+\BOOKMARK [2][-]{section*.19}{Control and neuromodulation}{section*.12}% 19
+\BOOKMARK [3][-]{section*.20}{Si1 gating of network activity}{section*.19}% 20
+\BOOKMARK [3][-]{section*.21}{Neuromodulatory burst frequency control}{section*.19}% 21
+\BOOKMARK [1][-]{section*.22}{Discussion}{section*.2}% 22
+\BOOKMARK [2][-]{section*.23}{Kinetic modulation provides smooth frequency control}{section*.22}% 23
+\BOOKMARK [2][-]{section*.24}{Network hysteresis and distributed rhythmogenesis}{section*.22}% 24
+\BOOKMARK [2][-]{section*.25}{Evolutionary conservation of modulatory timescales}{section*.22}% 25
+\BOOKMARK [2][-]{section*.26}{Model limitations and future directions}{section*.22}% 26
+\BOOKMARK [2][-]{section*.27}{Implications for adaptive motor systems}{section*.22}% 27
+\BOOKMARK [2][-]{section*.28}{Conclusions}{section*.22}% 28
+\BOOKMARK [1][-]{section*.29}{Acknowledgments}{section*.2}% 29
+\BOOKMARK [1][-]{section*.30}{Appendix: a basic Hodgkin-Huxley based model of the swim CPG interneuron \(SiN\)}{section*.2}% 30
+\BOOKMARK [1][-]{section*.31}{References}{section*.2}% 31

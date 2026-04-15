@@ -1,0 +1,1019 @@
+\documentclass[nofootinbib,aip,amsmath,amssymb,reprint,twocolumn,10pt]{revtex4-2}
+\usepackage{graphicx}% Include figure files
+\usepackage{dcolumn}% Align table columns on decimal point
+\usepackage{bm}% bold math
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{mathptmx}
+\usepackage{verbatim}
+\usepackage{fdsymbol}
+\usepackage{sidecap}
+\usepackage{placeins}
+\usepackage{xcolor}
+\usepackage{amsfonts,amsthm,amscd}
+\usepackage{mathtools}
+\usepackage{hyperref}
+\usepackage{bbold}
+% \usepackage{float}
+\usepackage{tabularx}
+\usepackage[ruled,lined]{algorithm2e}
+\usepackage{amssymb} 
+
+\newcommand{\llbracket}{\mathopen{[\![}}
+\newcommand{\rrbracket}{\mathclose{]\!]}}
+
+\begin{document}
+
+\title{Kinetics of plasticity regulate burst frequency in a {\em \textit{Dendronotus iris}} swim CPG model}
+\title{Resilience and plastic kinetics of bursting rhythmogenesis in a {\em \textit{Dendronotus iris}} swim CPG model}
+
+
+\author{James Scully}
+\email{jamesjscully@gmail.com}
+\affiliation{Neuroscience Institute, Georgia State University,
+100 Piedmont Ave., Atlanta, GA 30303, USA.}
+\author{Akira Sakurai}
+\email{akira@gsu.com}
+\affiliation{Department of Mathematics \& Statistics, Georgia State University, 
+25 Park Pl., Atlanta, GA 30303, USA.}
+\author{Paul Katz}
+\email{pkatz@umass.edu}
+\affiliation{Department of Biology, University of Massachusetts in Amherst, USA}
+\author{Andrey L. Shilnikov}
+\email{ashilnikov@gsu.edu}
+\affiliation{Neuroscience Institute and Department of Mathematics \& Statistics, Georgia State University, \\
+100 Piedmont Ave., Atlanta, GA 30303, USA.}
+
+\keywords{locomotion, modeling, half-center oscillator, hco, excitatory, inhibitory, rhythmic, oscillations, bursting, neurons, subnetworks, synaptic, metabotropic, network, hysteresis, neuroscience, fast-slow, adaptability, robustness, resilience}
+
+\date{\today}
+\begin{abstract}
+
+The swim central pattern generator (CPG) of {\em \textit{Dendronotus iris}} produces robust rhythmic activity despite variability in its components and external perturbations.
+This study examines the contributions of slow synaptic dynamics and the coexistence of multiple oscillatory pathways to the resilience of this network.
+We constructed a four-cell model based on experimental data, incorporating slow synaptic processes and fast-slow decomposition.
+Preliminary findings indicate that robustness emerges from the combined influence of multiple oscillatory mechanisms rather than reliance on a single dominant pathway.
+This model provides a framework for understanding adaptive motor rhythms and their application to biological and synthetic systems.
+\end{abstract}
+
+\maketitle
+\section{Introduction}
+Animal locomotion emerges from neural circuits that must remain effective despite intrinsic variability, changing body size, and fluctuating environmental conditions.
+Early work on locusts demonstrated ``fictive flight,'' revealing that rhythmic motor output can persist without sensory feedback \cite{Wilson1961}.
+This led to the identification of autonomous, rhythmogenic circuits known as central pattern generators (CPGs) that drive a diverse variety of rhythmic motor behaviors in both invertebrates and vertebrates \cite{MarderCalabrese1996, Kiehn2006}.
+
+Because locomotion underpins critical behaviors like foraging and predator avoidance, CPGs evolve under selective pressure to adapt to environmental variables like temperature and maintain appropriate scaling among body size, locomotion speed, and rhythmic frequency \cite{Marder2023}.
+These circuits integrate sensory feedback and descending control signals, relying on dynamical mechanisms across multiple timescales: spikes at milliseconds, bursts shaped over seconds, and homeostatic feedback stabilizing circuits over minutes to days \cite{MarderCalabrese1996}.
+
+Prior research has shown that ion channel degeneracy allows broad variability in conductances among genetically identical individuals to yield similar functional states \cite{Marder2011, OLeary2014}, with homeostatic feedback linked to intracellular calcium stabilizing neuronal activity \cite{Franci2020}.
+However, this does not explain how synapses and cells coordinate to produce reliable bursting across a range of frequencies.
+We propose that controllability, the ability to produce diverse behaviors by modulating a control variable, is another key factor.
+In this study, we demonstrate how the kinetic properties of synaptic enhancement allow burst frequency control in the \textit{Dendronotus iris} swim CPG \cite{SakuraiKatz2016}.
+
+Initially driven by evolutionary questions about locomotor diversity within its clade---including dorsal-ventral swimmers, left-right swimmers, and non-swimmers \cite{Newcomb2012}---our research on the \textit{Dendronotus iris} swim CPG uncovered a novel role for neuroplasticity.
+Our modeling indicates that the temporal properties of synaptic enhancement, rather than its magnitude or static strength, confer precise control over the network's bursting frequency and pattern [neuroplasticity citation].
+Specifically, the kinetics of synaptic enhancement provide network-level adaptability in this system \cite{SakuraiKatz2016}.
+
+Looking ahead, this work highlights the critical role of synaptic plasticity kinetics in governing neural circuit dynamics [neuroplasticity citation].
+These properties may serve as a general mechanism for controllability across diverse systems, though the biological processes regulating them remain underexplored.
+Synaptic enhancement spans facilitation, augmentation, and post-tetanic potentiation, with augmentation matching the timescale of bursting in the \textit{Dendronotus iris} CPG [neuroplasticity citation].
+This could involve co-regulation of enhancement forms or selective modulation of augmentation, possibly via synaptotagmin isoforms [neuroplasticity citation].
+
+Here we show that the timing kinetics of inhibitory plasticity act as a tunable control parameter for rhythmogenesis, providing a mechanistic basis for both developmental scaling and recovery from perturbations.
+
+The paper is organized as follows: first, we describe the swim CPG network assembly, detailing neuron and synaptic interaction modeling. Second, we validate the network by comparing simulated voltage traces with empirical data from laboratory experiments involving current injections and perturbations.
+Finally, we explore how burst frequency is precisely controlled through synaptic enhancement kinetics, demonstrating the pivotal role of intermediate timescale dynamics in adaptive locomotion.
+
+\section{Methods and models}
+%
+The central objective of this study is to develop and validate a computational model of the \textit{Dendronotus iris} swim central pattern generator (CPG) that enhances network robustness through a four-cell circuit.
+The modeling process follows our recent methodological paper \cite{scully2024pairing} which provides extensive details on the modeling process.
+This reference includes an extensive dynamical analysis of the neuronal, synaptic, and subnetwork models that are used in this work. We summarize the essential details here for convenience.
+
+\subsection{Model of the swim interneuron (SiN)}
+%
+We adapte a conductance-based model from Plant's 1981 framework \cite{plant81,scully2024pairing} \cite{Alacam2015}, incorporating an additional fast $I_h$ current to capture the cellular properties of the \textit{Dendronotus iris} swim CPG. This Hodgkin-Huxley type model, referred to as the swim interneuron (SiN) model, provides a biophysically detailed representation of the core CPG neurons. The Reader can find all details of the  comprehensive bifurcation analysis of the SiN model, including its chaotic dynamics, in the earlier work \cite{scully2024chaos}. Following Ref.~\cite{scully2024chaos} we re-calibrated the model to constrain it to the following two simple and generic assumptions to meet its biological counterpart.  i) It demonstrates only two types of neuronal activity: a hyperpolarized quiescent state and tonic-spiking oscillations within the given parameter range; moreover the further the model is away from the transition, the higher the spike rate [frequency] of fast spiking is. ii). Having hyper-polarized by an inhibitory synaptic or applied current, the model demonstrates a post-inhibitory rebound followed by slow spike frequency adaption, see Fig.~7 in Ref.~\cite{scully2024pairing}.      
+
+The membrane potential dynamics are governed by:
+\begin{equation}
+C_m \frac{dV}{dt} = -I_{I} - I_K - I_{T} - I_{KCa} - I_h - I_{leak},
+\end{equation}
+where $C_m$ is the membrane capacitance, and the ionic currents are:
+\begin{itemize}
+  \item $I_{I}$: Fast inward sodium/calcium current (spike generation).
+  \item $I_K$: Fast outward potassium current (repolarization).
+  \item $I_{T}$: Slow inward TTX-resistant Na$^+$/Ca$^{2+}$ current (burst initiation).
+  \item $I_{KCa}$: Slow outward Ca$^{2+}$-activated K$^+$ current (burst termination/adaptation).
+  \item $I_h$: Fast hyperpolarization-activated inward current (stabilization).
+  \item $I_{leak}$: Passive leak current (resting potential).
+\end{itemize}
+
+The fast subsystem (spiking) is controlled by gating variables $h$, $n$, and $y$:
+\begin{align}
+h' &= \frac{h_\infty(V) - h}{\tau_h(V)}, \\
+n' &= \frac{n_\infty(V) - n}{\tau_n(V)}, \\
+y' &= \frac{1}{2} \left[ \frac{1}{1 + e^{10(V-50)}} - y \right] / \left[ 7.1 + \frac{10.4}{1 + e^{(V+68)/2.2}} \right].
+\end{align}
+with the corresponding currents:
+\begin{align}
+I_{I} &= g_{I}\, h\, m_\infty^3(V)\, (V-E_{I}), \\
+I_K &= g_K\, n^4\, (V-E_K), \\
+I_h &= g_h\, \frac{y (V-E_h)}{(1 + e^{-(V-63)/7.8})^3}, \\
+I_{leak} &= g_L (V-E_L).
+\end{align}
+
+The slow cellular dynamics are determined by the following two currents:
+\begin{align}
+I_{T} &= g_{T}\, x\, (V-E_{I}), \\
+I_{KCa} &= g_{KCa}\, \frac{[\mathrm{Ca}]}{0.5 + [\mathrm{Ca}]} (V-E_K),
+\end{align}
+with slowly evolving variables $x$ and intracellular calcium $[\mathrm{Ca}]$ governed by the ODE system:
+\begin{align}
+x' &= \frac{x_\infty(V) - x}{\tau_x}, \\
+[\mathrm{Ca}]' &= \rho \left( K_c\, x\, (E_{Ca} - V + \Delta_{\mathrm{Ca}}) - [\mathrm{Ca}] \right),
+\end{align}
+where $\Delta_x$ and $\Delta_{\mathrm{Ca}}$ are two bifurcation parameters controlling the cellular activity and transitions between activity types like tonic-spiking, quiescent, and bursting etc. 
+For all fine details of the neuron and synapse models used in this study, the Reader is welcome to consult with the previous modeling study in Ref.~\cite{scully2024pairing}; for details related to activation/inactivation functions, see Appendix below.
+
+\subsection{Synaptic models}
+
+Synaptic interactions were modeled using a novel phenomenological approach introduced in  Ref.~\cite{scully2024pairing}, balancing biological realism and computational tractability. Two main types of chemical synapses are implemented and used in this study. 
+%%%
+\begin{itemize}
+  \item \textbf{Fast synapses}: are modeled with a gating variable $S$ that responds rapidly to presynaptic voltage, following first-order $\alpha$-synapse kinetics \cite{destexhe1994synthesis, Wang-Rinzel-92, Rall67}. The dynamics are:
+  \begin{equation}
+    S' = \alpha (1-S) f_{\infty}(V_{pre}) - \beta S,
+  \end{equation}
+  where  $\alpha$ and decay $\beta$ are neurotransmitter release and decay rate constants, and $f_{\infty}(V_{pre})$ is a sigmoid function of presynaptic voltage:
+\begin{equation}
+f_{\infty}(V_{pre}) = \frac{1}{1+e^{-k(V_{pre}-\Theta_{syn})}}.  \label{finf}
+\end{equation}
+Here, the constant $k$ determines the derivative at $f_{\infty}(V) = 0.5$ at the inflection point where $V=\Theta_{syn}$. Here $\Theta_{syn}$ is treated as the synaptic threshold typically set around $+20$mV in the middle of spikes, between the spike threshold around $-40$mV (sodium channels opens) and the spike peak at $+40$mV. Values for $k$ are typically set somewhere in a range $\left[0.5,\, 10\right]$, and as the value of $k$ becomes large,  the function becomes a continuous approximation of the Heaviside step function, where the function $f_\infty$ remains close to zero as long as $V_{pre}(t) < \Theta_{syn}$, and quickly jumps to 1 after the voltage in the presynaptic neurons exceed the synaptic threshold.
+
+  
+  
+  \item \textbf{Slow synapses}: Extended with a nonlinear term for synaptic accumulation and high-pass filtering, capturing slow summation and delayed responses observed in CPGs \cite{NW02, WNT02, TW05, SNLK11}. The logistic synapse model is given by:
+  \begin{equation}
+    S' = \alpha\, S\,(1-S)\, f_{\infty}(V_{pre}) - \beta (S-S_0),
+  \end{equation}
+  where $0<S_0 \ll 1$ is a baseline (average) release rate.
+\end{itemize}
+
+To ensure consistent theoretical limits across different synaptic parameter combinations, we normalize the synaptic variables using scaling factors that depend on the synapse type:
+
+For \textbf{fast synapses} ($\alpha$-type):
+\begin{equation}
+  {\rm scale}_{f[ast]} = \frac{\alpha}{\alpha + \beta}.
+\end{equation}
+
+For \textbf{slow synapses} (logistic/sigmoid with S factor):
+\begin{equation}
+  {\rm scale}_{s[low]} = \frac{\alpha - \beta}{\alpha}.
+\end{equation}
+{\bf why--  Confusing!!! }
+
+These scaling factors ensure that the theoretical asymptotic limit (as $V_{pre} \to \infty$ and $t \to \infty$ {\bf why--  Confusing!!! }) equals unity for all parameter combinations, facilitating direct comparison between different synaptic configurations.
+
+The synaptic current is given by:
+\begin{equation}
+  I_{syn} = g_{syn}\, \frac{S(t)}{\rm scale_s}\, (V_{post}-E_{rev}),
+\end{equation}
+where $g_{syn}$ is maximal conductance, $E_{rev}$ is the reversal potential (set to +40 mV for excitatory, -80 mV for inhibitory synapses), and ${\rm scale}_s$ is the normalization factor.
+
+Parameter values for $\alpha$ and $\beta$-constants were tuned to match experimental timescales: for fast synapses we use $\alpha \sim 0.01$--$0.1$ and $\beta \sim 0.01$--$0.1$, and $\alpha \sim 0.01$ and $\beta \sim 0.0005$--$0.001$ for  slow synapses. The sigmoid threshold $\Theta_{syn}$ was set near middles $-20$mV of the spikes, and $k$ adjusted for steepness.
+
+The scaling approach controls for the effect of changing kinetic parameters on effective synaptic conductance magnitude, allowing independent manipulation of synaptic timing and strength. This framework enables control over synaptic frequency response and summation while maintaining consistent amplitude scaling, supporting both rapid and slow network interactions as observed in the \textit{Dendronotus} swim CPG \cite{SakuraiKatz2016, scully2024pairing}. For further details and comparisons to other kinetic models, see \cite{destexhe1998kinetic, Hill2001}.
+
+
+\begin{figure}[t!]
+\centering
+\includegraphics[width=.5\textwidth]{../jack_figs/ZOO_synapses_4panels.jpg}
+%\includegraphics[width=.25\textwidth]{../jack_figs/ZOO_synapses.jpg}\\
+%\includegraphics[width=.22\textwidth]{../jack_figs/S1_synapses1.jpg}
+%\includegraphics[width=.22\textwidth]{../jack_figs/S1_synapses2.jpg}
+\caption{{\bf Calibration of two synaptic models, $\alpha$ and logistic, and validation of inhibitory coupling mechanisms. Fact-check list I:} Compare panels~C and~D with the corresponding neurophysiological recordings presented in Fig.~7 of Ref.~\cite{sakurai2022bursting}.
+(A–B) Three positive current pulses of progressively increasing amplitude were applied to Si2R to calibrate the $\alpha$-synapse and logistic synapse models (bottom trace), as well as to reproduce the inhibitory postsynaptic potential (IPSP) responses observed in the contralateral Si2L (top trace in panel~B).
+(C–D) Two positive current pulses injected into Si2R evoked accumulating IPSP responses in Si2L (top trace) and elicited both fast and slow echo responses in Si3L. These echoes arise from distinct mechanisms: a fast component mediated by the electrical coupling and a slower, delayed inhibitory response mediated by the logistic synapse between Si2R and Si3L. Together, these features reproduce the experimentally observed dynamics and confirm the functional roles of electrical and chemical inhibition within the swim CPG circuitry (see Fig.~2A).}
+\label{fig:group_fig5}
+\end{figure}
+
+Panels~A and~B of Fig.~\ref{fig:group_fig5} illustrate the calibration procedure for the two synaptic models used in the assembly line of the {\em \textit{Dendronotus iris}} swim CPG model. Three positive current pulses of progressively increasing amplitude were injected into interneuron Si2R to fine-tune the $\alpha$-synapse and logistic synapse models (bottom traces labeled Rate) and receive the adequately expected [realistic] responses in the three other coupled neurons of the swim CPG. The model responses were matched against the empirically recorded inhibitory postsynaptic potentials (IPSPs) in the contralateral Si2L (top two traces in Fig.~\ref{fig:group_fig5}B), ensuring quantitative agreement in both amplitude scaling and temporal decay profiles. This calibration step establishes the parameter sensitivity and transfer properties of the inhibitory pathway between the paired Si2 neurons.
+
+Panels~C and~D of Fig.~\ref{fig:group_fig5} present a detailed comparison between the simulated and experimental responses to two positive current pulses [of distinct amplitudes] applied to Si2R on the CPG network. In both model and experiment, these stimuli evoke a series of accumulating IPSP responses in Si2L (top traces) and induce complex echo-like responses in Si3L. The echoes consist of two temporally distinct components: (i) a fast, short-latency depolarizing response mediated by the electrical  coupling between Si2R and Si3L, and (ii) a slower, delayed inhibitory component arising from the logistic synapse connecting the same pair. The interplay of these fast and slow processes reproduces the dual-timescale modulation of Si3L observed in the experimental recordings.
+Together, these results validate the hybrid inhibitory and electrical coupling mechanisms embedded in the model and confirm their physiological basis within the swim CPG circuit of {\em \textit{Dendronotus iris}} (see network architecture in Fig.~3A). The close match between modeled and recorded traces demonstrates that the $\alpha$- and logistic-synapse formulations successfully capture the dynamics of graded synaptic transmission and delayed inhibition that are essential for generating stable, resilient rhythmic output in the biological system.
+
+\subsection{Four-cell network assembly}
+
+We assembled the four-cell swim CPG network by integrating validated two-cell subnetworks---half-center oscillators (HCOs) and excitatory-inhibitory (EI) modules---following the approach in Ref.~\cite{scully2024pairing}. Synaptic kinetics for mutual inhibition and E/I interactions were matched to previously characterized modules.
+
+Cellular parameters and synaptic kinetics were preserved from prior models, with the exception of Si3 (swim interneuron 3), whose endogenous excitability was increased by shifting its voltage threshold $\Delta [\rm Ca]$ by 5\,mV to promote spiking. Network calibration was performed by symmetrically tuning synaptic conductances using the following protocol:
+
+\begin{enumerate}
+  \item \textbf{Configuration:} Pre- and postsynaptic voltage variables were assigned according to the known swim circuits of \textit{Dendronotus iris}~\cite{SakuraiKatz2016}.
+  \item \textbf{Initialization:} All cells were set to a quiescent state with synaptic conductances at zero.
+  \item \textbf{Drive:} Synaptic drive was applied to Si3 until the excitatory postsynaptic gating variable $S$ showed sustained accumulation, measured by local minima rising above 0.1 and saturating over 0.5--3\,s (corresponding to 1/4--1/2 of the burst period, which ranges from 2--12\,s depending on animal size).
+  \item \textbf{Excitation:} Excitatory conductance from Si3 to contralateral Si2 was increased until inhibitory $S$ (Si2-to-Si2) reached minima above 0.1 over 0.5--3\,s.
+  \item \textbf{Slow Inhibition:} Inhibitory conductance in the E/I pair was raised until Si3 frequency decreased by 50\% over 1\,s.
+  \item \textbf{Fast inhibition:} Inhibitory conductances for both HCOs (Si2L--Si2R and Si3L--Si3R) were elevated until a stable burst rhythm emerged, visually matching empirical voltage traces \cite{SakuraiKatz2016}.
+  \item \textbf{Fine-tuning:} Excitability was adjusted slightly (e.g., $\Delta [\rm Ca] < 2$\,mV) to achieve a duty cycle matching the experimental observations.
+\end{enumerate}
+
+\subsection{Validations}
+%
+To validate our CPG model, we performed direct current injection into the voltage equation of selected interneurons. Specifically, we added a current term to the right-hand side of the membrane potential equation and varied its amplitude to mimic experimental perturbations. No additional parameter tuning, optimization, or fitting procedures were employed during these tests. This approach ensures that the model's responses reflect its intrinsic dynamics and structure, maintaining the integrity of the validation process.
+
+\subsection{Neuromodulation}
+\paragraph{5-cell network setup}
+%%%%
+
+The {\em \textit{Dendronotus iris}} CPG is driven by the a pair of interneurons Si1L and Si1R, which control the initiation, termination and burst duration of the swim behaviors \cite{sakurai2019command, SakuraiKatz2016}. Because the Si1-neurons fire tonically with close rates during swim episodes, we use a single neuron model for both to control the whole CPG model.
+
+In this setup with the single Si1 driving the network, we set the following Si3 interneurons as quiescent, rather than using them as forced topically spiking ones in the absence of Si1s before. The Si1 neuron was configured to provide an excitatory drive to both Si3 neurons. Additionally, the Si1 neuron is modeled to deliver an excitatory drive through  the introduction of the modulatory variable $0 \le s_m \le 1$ to regulate the synaptic kinetics or synaptic conductance, specifically, in the excitatory synapses originating from Si3s toward Si2s in the swim CPG. This axillary variable $s_m$ is modeled as a slow synapse's rate determined by the pre-synaptic Si1-neuron as follows:
+%
+\begin{equation}
+\frac{ds_m}{dt} = \alpha_m\, s_m (1 - s_m) f_{\infty}(V_0) - \beta_m (s_m - s_0).
+\end{equation}
+%We model neuromodulation in the swim CPG by introducing a modulatory variable $s_m$ that evolves according to:
+%\begin{equation}
+%\frac{ds_m}{dt} = \alpha_m\, s_m (1 - s_m) f_{\infty}(V_0) - \beta_m (s_m - s_0).
+%\end{equation}
+{\bf do we need numbers for the constants in the equation above???}
+%
+This modulatory variable  $s_m$ can affect either [or both] synaptic kinetics or synaptic conductance, with both approaches using two modulation factors $g_m$ (a maximal conductance) and $\rm scale_m$, which is the appropriate scaling factor for the synapse type: $\rm scale_m = (\alpha_x - \beta_x)/\alpha_x$ for slow synapses or $\rm scale_m = \alpha_x/(\alpha_x + \beta_x)$ for fast synapses. {\bf why--  Confusing!!! }
+
+~\\
+In what follows, we will introduce two distinct approaches for modeling neuromodulation in the swim CPG, each reflecting plausible mechanisms for burst frequency control.
+
+ The first and more straightforward method is to modulate the synaptic conductance directly, which alters the amplitude of the synaptic current $I_{syn}$ by scaling the effective synaptic strength:
+\begin{equation}
+I_{syn} = {\bar g}_{syn}\,s \left [ \frac{ 1+g_m s_m/{\rm scale}_m}{{\rm scale}_s} \right ] (V_{post}-E_{syn}),
+\end{equation}
+or, after introducing $\tilde s_m=\left [ \frac{ 1+g_m s_m/{\rm scale}_m}{{\rm scale}_s} \right ]$,  as follows in brief:
+\begin{equation}
+I_{syn} = {\bar g}_{syn}\,s \cdot \left (1+{\tilde s_m} \right ) \cdot  (V_{post}-E_{syn}).
+\end{equation}
+
+Here, the gain factor $g_m$ and modulatory variable $s_m$ increase the effective conductance, with $\rm scale_m$ and $\rm scale_s$ ensuring proper normalization for the synapse type.  {\bf Confusing!!! }
+
+Alternatively, we can model the modulation of the synaptic kinetics by adjusting the rise rate parameter $\alpha_x$, which governs the rate of neurotransmitter release and synaptic accumulation:
+\begin{equation}
+\frac{ds}{dt} = \ \alpha_x \left [ \frac{(1 + g_m s_m)}{{\rm scale}_m} \right ]  s (1 - s) f_{\infty}(V_{pre}) - \beta_x (s - s_0).
+\end{equation}
+This approach changes the timescale of synaptic facilitation, allowing the network to adapt its burst frequency through kinetic modulation. The choice between conductance and kinetic modulation is motivated by the diversity of short-term synaptic plasticity mechanisms observed experimentally, and in the absence of direct evidence for either mechanism in this system, both approaches are justified \cite{zucker2002short, jackman2017mechanisms}. 
+
+Finally, we notice that the modulation of the synaptic kinetics can be also effectively affected by the decay factor $\beta$ in the $\alpha$- and logistic synapse model introduced above.  This is true especially for bursting networks where the strength  [chemical] synaptic coupling is a monotone, nonlinear function of the spike frequency of the pre-synaptic neurons, and varies accordingly with variations of spike rates in the constituent interneurons of the swim CPG circuit; the Reader is advised to consult more for details in the early computation study~\cite{scully2024pairing}.   
+
+\section{Results}
+
+\begin{figure*}[tbp]
+\centering
+\includegraphics[width=.95\textwidth]{../jack_figs/assembly_5steps_CPG.jpg}
+%\includegraphics[width=.4\textwidth]{../jack_figs/assembly_step1.jpg}
+%\includegraphics[width=.4\textwidth]{../jack_figs/assembly_step2.jpg}\\
+%\includegraphics[width=.4\textwidth]{../jack_figs/assembly_step3.jpg}
+%\includegraphics[width=.4\textwidth]{../jack_figs/assembly_step4.jpg}\\
+%\includegraphics[width=.4\textwidth]{../jack_figs/assembly_step5.jpg}\\
+\caption{CPG assembly in five sequential steps. (A) Four uncoupled interneurons, with Si3 neurons exhibiting intrinsic excitability and firing at a higher rate.
+(B) Si3 neurons provide fast excitatory drive to ipsilateral Si2 neurons.
+(C) Si2 neurons deliver slow inhibitory feedback to Si3 neurons to slow them down.
+(D) Reciprocal inhibition between contralateral Si3 neurons triggers an initial rhythm formation.
+(E) Reciprocally inhibitory synapses activated between contralateral Si2 neurons, along with two electrical synapses between Si3R$\leftrightarrows$Si2L and Si3L$\leftrightarrows$ Si2R pairs of interneurons, generate stably the network-level bursting in the swim CPG model of {\em \textit{Dendronotus iris}}. The traces (of marching colors) underneath the voltage, $V(t)$, waveforms represent the corresponding neurotransmitter probability $s(t)$ or release rates in the pre-synaptic neurons. }
+\label{fig:fig1}
+\end{figure*}
+
+
+\section{CPG assembly}
+%
+Following the methodology described in the Methods section, now we can systematically assemble the four-cell swim CPG by coupling its interneurons labelled by Si2L/R (left/right) and Si3L/R, with the calibrated synapse models: fast excitatory and slow and delayed inhibitory, along with electrical synapses (also called informally by gap junctions sometimes).  We begin with calibrating the slow synaptic accumulation timescales, and then progressively increasing the synaptic conductances. This stepwise approach allows us to observe and document, in detail, the sequential emergence of the characteristic swimming pattern through five assembly stages, as illustrated in Fig.~\ref{fig:fig1}. We note the ultimate result -- the stable network bursting does not depend on the assembly order, which can be different in other trials. \\~\\ 
+%
+{\bf Step~1}: the assembly process begins with all four {\em uncoupled} interneurons, see Fig.~\ref{fig:fig1}A. 
+This initial configuration highlights the intrinsic differences between the two neuron types. Our first working assumption is that the Si3 neurons (bottom red traces) exhibit rapid, high-frequency spiking at approximately 50~Hz, {\em pretending as} they would have received an excitatory drive from the Si1-neurons. This excitatory drive should first initiate the network rhythmic bursting by the CPG, and then keeps the network running as long as the it remains sufficient enough; otherwise, the rhythm slows down and terminates, see also Figs.~\ref{fig:bodysize_collage} and \ref{fig:si1_control} below with the detail discussing following. Meanwhile, the [inhibitory] Si2-neurons (top blue traces) are set initially as hyperpolarized quiescent ones, or position near a borderline in a parameter space between quiescent and spiking activity with a low frequency, as Fig.~\ref{fig:fig1}A highlights. The voltage traces are superimposed with the corresponding four traces (of the matching colors) underneath that simulate the probabilities $s(t)$ ($0 \le s \le 1$ ) or rates of neurotransmitter releases by each interneurons. The working assumption here is that the synaptic temporal strength correlates nonlinearly with the spike frequency in  pre-synaptic neurons, which is the central for understanding the CPG rhythmogenesis. \\ ~\\    
+%
+{\bf Step~2}: upon activation of the {\em fast excitatory} synapses projected unidirectionally from the Si3s onto the ipsilateral Si2-neurons (Fig.~\ref{fig:fig1}B), the latter ones begin firing tonically to release inhibitory neurotranmitters. Note the substantially slow (and thus delayed) activation of the neurotransmitter release in the inhibitory synapses (blue traces) compared to the fast excitatory ones (red traces). \\  ~\\
+%%%%
+{\bf Step~3}: the introduction of slow inhibitory feedback from the Si2 to the Si3 neurons (Fig.~\ref{fig:fig1}C) marks a critical transition in network dynamics. This inhibitory coupling creates a fundamental  [fast]{\em excitatory}--[slow]{\em inhibitory loop} that gives rise to necessary slow spike-frequency modulation in two pairs of the ipsilaterally coupled neurons Si3R$\leftrightarrows$Si2L and Si3L$\leftrightarrows$ Si2R. Yet, following experimental studies, this feed-forward/slow-feedback loop is set {\em not} to be strong enough to initiate and produce sustained osculations within each pair in isolation. We note though that in theory, increasing the coupling between the pair-wisely coupled neurons can potentially trigger autonomously bursting oscillations alone, see Ref.~\cite{scully2024pairing} for more details. \\ ~\\
+%%
+{\bf Step~4}: activation of reciprocal inhibition between two contralateral Si3 neurons (Fig.~\ref{fig:fig1}D) patterns their tonic spiking activity into left-right alternation bursting even in this incomplete network. The previously continuous Si3 spiking becomes organized into discrete bursts that alternate with quiescent periods with  deep sags due to increasing reciprocal inhibition between them. The resulting pattern shows coordinated bursting between ipsilateral neuron pairs, with burst durations of approximately 2-3 seconds and interburst intervals of similar duration. The following Si2 neurons also display clear burst episodes of approximately the same length with no inhibitory sags, directly driven by the sustained high-frequency firing of their respective Si3 partners. Notably, the Si3 neurons maintain their continuous rapid spiking throughout this phase, indicating unidirectional excitatory coupling to drive bursting activity in  Si2s, which in turn provides delayed feedback inhibition that also contributes to pattern and terminate Si3 bursts.  While the overall burst structure is preserved, subtle phase relationships begin to emerge between the left and right Si3 neurons, with their burst timing becoming less synchronized. \\~\\
+%%
+%%
+{\bf Step~5}: the final assembly step documented in Fig.~\ref{fig:fig1}E incorporates reciprocal inhibition between the contralateral Si2 neurons along with weak electrical synapses (sometimes loosely called pair-wise gap junctions between Si3 and Si2 neurons. This configuration can now produce stable, coordinated network-level bursting with clear left-right alternation. The swimming pattern emerges throughout a long transient period, after which the network settles down to generate left/right sides burst in antiphase with well-defined burst durations of 3-4 seconds. The week electrical synapses  between the neurons also provide a necessary synchronization to maintain equal spike rates within and duration of bursts in both Si2s and Si3s. The reciprocal inhibitory connections between ipsilateral Si2s further enforce and stabilize alternating bursting patterns essential for effective swimming locomotion, which can potentially vary within the 1-2 through 12-14 second long range in juvenile and grown up adults, as Fig.~\ref{fig:bodysize_collage} demonstrates.
+
+\begin{figure*}[tbh!]
+\centering
+\includegraphics[width=.6\textwidth]{../"corel draw"/collage_a.jpg}
+\caption{{\bf Developmental scaling of swim dynamics.}
+CPG circuit as it adjusts to the changing body size and biophysical properties of {\em \textit{Dendronotus iris}} throughout development.
+(A) Schematic of the canonical swim CPG circuitry composed of the four core interneurons -- Si2L/R and Si3L/R --organized into two bilaterally symmetric inhibitory--excitatory modules. These twisted pairwise modules, interconnected by diagonal excitatory and reciprocal inhibitory synapses, form the structural basis for anti-phase left--right alternation and network-level rhythmogenesis.
+(B) Representative traces showing the voltage waveforms (top) and corresponding neurotransmitter release probabilities (lower traces) for the four core interneurons (SiN). These patterns are driven by tonic excitatory input from the Si1 interneurons, which provide the initiating drive necessary for the onset and termination of rhythmic bursting across the network. The combined electrical and chemical interactions among Si2 and Si3 neurons give rise to a robust, self-sustained oscillatory rhythm that defines the basic swim motor pattern.
+(C) Developmental scaling of swim rhythm dynamics across the lifespan of {\em \textit{Dendronotus iris}}. As the animal grows from juvenile (approximately 30 g) to adult (approximately 300 g) stages--a tenfold increase in body mass--the swim period correspondingly slows from approximately 2--3 s in juveniles to 12--14 s in mature individuals. Despite this pronounced temporal scaling, the underlying phase relationships among the four CPG interneurons remain invariant, as reflected in the voltage traces shown in panel~B. This remarkable stability demonstrates the CPG's capacity for self-similar temporal rescaling, ensuring that locomotor coordination and bilateral phase balance are preserved across a broad range of physiological and morphological states. To discuss and compare with Fig.~10 from the aspiring experimental study~\cite{sakurai2022bursting}. }
+\label{fig:bodysize_collage}
+\end{figure*}
+
+
+
+
+
+Throughout this assembly process, the emergence of the swimming pattern demonstrates the critical role of synaptic timing and conductance tuning in generating functional neural rhythms. The systematic approach of first establishing slow synaptic kinetics followed by conductance optimization ensures stable pattern generation while maintaining the biological realism of the \textit{Dendronotus iris} swim CPG.
+
+
+\subsection{Body size}
+
+
+The swim CPG of \textit{Dendronotus iris} must adapt to dramatic changes in body size throughout the animal’s lifespan, presenting a fundamental challenge for maintaining robust motor pattern generation. As these nudibranchs mature from juveniles weighing approximately 30g to adults exceeding 300 g -- a nearly ten-fold increase in body mass --their swimming behavior exhibits a pronounced temporal scaling while preserving the phase relationships and duty cycles of network bursting. This size-dependent adaptation demands that the underlying neural circuitry modulate its burst frequency across an exceptionally broad dynamic range without compromising the precise phase coordination required for effective locomotion.
+
+Such robust scaling implies that the CPG architecture possesses intrinsic mechanisms for automatic frequency compensation, likely mediated through the interplay of intrinsic membrane properties, synaptic conductances, and modulatory inputs. These mechanisms ensure that larger, slower animals can generate proportionally slower yet phase-preserved swimming rhythms, thereby maintaining efficient propulsion despite biomechanical constraints. Understanding how \textit{Dendronotus iris} achieves this dynamic stability across orders of magnitude in body size provides broader insights into general principles of neural scaling, network robustness, and the evolutionary design of multifunctional motor systems.
+
+
+Figure~\ref{fig:bodysize_collage} demonstrates the remarkable adaptability of our four-cell CPG model in generating size-appropriate swimming patterns. The circuit architecture remains fundamentally unchanged across different life stages, yet produces vastly different temporal dynamics. In the juvenile configuration, the network generates rapid bursting with periods of 2-3 seconds, characterized by high-frequency spike trains within each burst and relatively brief interburst intervals. The voltage traces reveal crisp, well-defined bursts with steep onset and termination phases, reflecting the fast kinetics appropriate for small, agile animals.
+
+In contrast, the adult configuration shows dramatically slower dynamics, with burst periods extending to 12-14 seconds. The voltage traces display more gradual burst onsets and longer plateau phases, with extended interburst intervals that accommodate the slower mechanical constraints of larger body size. Critically, despite this four- to seven-fold change in temporal scaling, the fundamental left-right alternation and the relative timing relationships between Si2 and Si3 neurons remain preserved, ensuring that the basic coordination pattern underlying effective swimming is maintained.
+
+The neurotransmitter release probability traces in Fig.~\ref{fig:bodysize_collage} provide insight into the synaptic mechanisms underlying this temporal flexibility. The slow accumulation and decay of synaptic variables, particularly evident in the adult traces, suggest that changes in synaptic kinetics rather than just conductance magnitudes drive the frequency adaptation. This points to a control mechanism operating through the temporal properties of synaptic transmission rather than simple amplitude modulation.
+
+ Despite this pronounced temporal scaling, the underlying phase relationships among the four CPG interneurons remain invariant, as reflected in the voltage traces shown in panel~B of Fig.~\ref{fig:bodysize_collage}. This remarkable stability demonstrates the CPG's capacity for self-similar temporal rescaling, ensuring that locomotor coordination and bilateral phase balance are preserved across a broad range of physiological and morphological states. 
+ 
+Figure~\ref{fig:antiphase_pattern} illustrates the preserved coordination mechanisms that underlie the remarkable adaptability of the swim CPG. The network is organized into twisted pairwise modules, in which the excitatory Si3-neurons provide positive drive to the inhibitory Si2-neurons. This excitatory–inhibitory interplay establishes self-regulating negative feedback loops that control, in term, burst duration and, consequently, the overall network period. Together, these reciprocal interactions form a robust architecture for left–right alternation and temporal coordination, sustaining stable rhythmic output across a wide range of frequencies and behavioral contexts.
+
+The diagonal excitatory–inhibitory connections, together with the reciprocally inhibitory half-center oscillators formed by the contralateral Si3L-Si3R and Si2L--Si2R pairs -- thus reflecting the bilateral symmetry of the animal -— give rise to a circuit structure that is inherently scalable. The alternating burst initiation between the left and right sides remains consistent even as the total cycle period varies from approximately 2 to 14~seconds. This invariance highlights the fundamental robustness and structural stability of the oscillatory framework, ensuring reliable coordination despite large variations in intrinsic neuronal or synaptic timescales.
+
+Such scalability is essential for accommodating the dramatic changes in body size, neuromuscular load, and conduction delays that occur during the lifetime of {\em \textit{Dendronotus iris}}. As the animal matures, its CPG must preserve the relative phase relationships among interneurons while modulating the absolute timing of network bursts. The architecture shown here provides a mechanistic explanation for how the same neuronal blueprint can maintain phase-locked coordination across a tenfold range of swimming frequencies. Moreover, it suggests that the interplay between excitatory drive, inhibitory feedback, and electrical coupling confers the necessary flexibility for neuromodulatory adjustments, allowing the CPG to fine-tune its dynamics in response to environmental or physiological demands without compromising overall pattern stability.
+
+
+\begin{figure*}[t!]
+\centering
+\includegraphics[width=.5\textwidth]{../"corel draw"/collage3b.jpg}
+\caption{{\bf Left-right coordination [episodes] subnetworks.} Active phases of the anti-phase left--right episodes within the swim pattern, generated by the {\em \textit{Dendronotus iris}} CPG under control conditions, emerge from twisted pairwise modules (Si3R $\leftrightarrows$ Si2L and Si3L$\leftrightarrows$ Si2R) that are unidirectionally coupled through excitatory ($\blacktriangledown$) and inhibitory ($\bullet$) synapses. This asymmetric excitatory--inhibitory coupling provides alternating drive and feedback that shape the timing and duration of each active burst phase.
+The cycling alternation of left--right activity is further stabilized and reinforced by two reciprocally inhibitory half-center oscillators (HSOs)---the Si3R $\leftrightarrows$ Si3L pair forming the lower HSO and the Si2R $\leftrightarrows$ Si2L pair forming the upper one. Together, these cross-layered and contralateral inhibitory connections create a robust and self-organizing architecture that ensures precise phase opposition and reliable alternation throughout the swim cycle.
+This configuration provides the mechanistic basis for the stable anti-phase bursting observed experimentally in the swim {\em \textit{Dendronotus iris}} CPG network. Compare with the original recordings shown in Fig.~1 of Ref.~\cite{sakurai2022bursting}. Shown underneath are the voltage waveforms are the simulated neurotransmitter release probabilities using the synaptic $\alpha$-model (in red for excitatory connections Si3s $\to$ Si2s  and grey for reciprocal inhibition between Si3s, as well as between Si2s) and logistic (in blue for inhibitory connections Si2s $\to$ Si3s) models for the fast and slow chemical synapses, resp.   
+%
+%Active phases of the anti-phase left--right episodes within the swim pattern, produced by the {\em \textit{Dendronotus iris}} CPG under control conditions, arise from twisted pairwise modules (Si3R $\leftrightarrows$ Si2L and Si3L $\leftrightarrows$ Si2R) that are unidirectionally coupled via excitatory ($\blacktriangledown$) and inhibitory ($\bullet$) synapses. Cycling alternation of the active phases in network bursting is reinforced by two reciprocally inhibitory HSOs, consisting respectively of bottom Si3R$\leftrightarrows$Si3L and top Si2R$\leftrightarrows$Si2L pairs. Compare with the original Fig.~1 from the experimental study~\cite{sakurai2022bursting}. 
+}
+\label{fig:antiphase_pattern}
+\end{figure*}
+
+
+
+Panels~A1 and A2 of Fig.~\ref{fig:antiphase_pattern} are meant to illustrate that the CPG network can be singled out fragmentally into two subnetworks governing the left-- right swim coordination. This reduction relies on the common dynamical feature of typical chemical synapses and their mathematical models, namely, each chemical synapse is i) unidirectional and ii) has a threshold. The synapse becomes activated or ``on'' as long as the membrane voltage in the pre-synaptic is above the level of the synaptic threshold, which can very between -40mV (and up to +10mV). Otherwise, the synapse is turned off dynamically when the pre-synaptic neuron remains hyper-polarized quiescent below the synaptic threshold. This is not true for electrical synapses that are bi-directional and carry the current flowing back and forth between such coupled neurons. Recall that its value remains proportional to a time-varying difference between membrane voltages: $I_{\rm elec}=g_{\rm elec}\, (V_{\rm pre}(t)-V_{\rm post}(t))$ -- the expression employed in modeling studies.      
+
+Following this paradigm, one can effectively understand the dynamics of the whole CPG circuit by isolating the active left and right sub-networks that govern episodically and unidirectionally its passive or inactive rest. Consider  Fig.~\ref{fig:antiphase_pattern}A where Si3R neuron sends contralaterally  
+an excitatory drive to the following  Si2L neuron, while it suppresses or inhibits its left  {\em vis-\'a-vis} -- Si3R; so does the active Si2L to Si2R forcing it to stay ``off'' to ensure the robustness of left-right alternation on the network level bursting. The key factor that determines and control the period of the active phase in this case is the [only] negative feedback by Si2L due to a slowly building inhibitory current that helps terminating the active tonic spiking phase in the otherwise autonomous Si3R-neuron. Note that in the absence of this inhibitory feedback, (intrinsically spiking) Si3R-neuron could have remained active indefinitely. Moreover, the stronger the reverse inhibition is, the faster the swim oscillations become like in juvenile slugs  and vice versa in the mature ones, see Fig.~\ref{fig:bodysize_collage}, where the network period increases up to 12--14 seconds. Finally, as soon as the Si3R--Si2L pair becomes naturally inactive and stop inhibiting the right pair made off Si3L--Si2R, the later wakes up to start a new cycle or episode of network bursting depicted in Fig.~\ref{fig:antiphase_pattern}B, and so forth.            
+
+Our modeling reveals that the $\alpha$-parameter, describing the activation rate in the slowly-inhibitory logistic synapse from Si2 to Si3 provides a particularly robust control mechanism for this temporal scaling. {\color{red}[Replace with actual parameter values]} Systematic variation of this single parameter enables control over burst frequency across a range spanning from approximately 1--2 up to 12--14 seconds -- encompassing the full range observed experimentally across \textit{Dendronotus} life stages. This represents a biologically plausible mechanism for ontogenetic adaptation, as developmental or activity-dependent changes in synaptic protein expression could readily modulate kinetic parameters without requiring wholesale rewiring of the circuit.
+
+The effectiveness of this kinetic control mechanism stems from the central role of unidirectional slowly building  Si2~$\to$~Si3 inhibition in burst termination. By modulating the rise time of this inhibitory synapse, the network can precisely adjust how quickly accumulating inhibition builds up to terminate Si3 bursts. Slower kinetics allow Si3 neurons to maintain longer burst durations, while faster kinetics promote more rapid burst termination. This creates a direct link between synaptic timescales and network period, providing elegant scalability without compromising the fundamental oscillatory structure.
+
+To conclude this section, we note that direct in~vitro voltage recordings across juvenile, control, and mature \textit{Dendronotus iris} animals are not currently available, and therefore we cannot experimentally track the long-term evolution of the swim CPG’s dynamics across development. Nevertheless, independent lines of evidence strongly support the conclusion that slow reciprocal inhibition plays a decisive role in setting the burst period of the network. In particular, the dynamic-clamp experiments reported in the earlier study, as documented by Fig.~10 in \cite{sakurai2022bursting}, provide a strong and compelling {\em de~facto} demonstration of this mechanism. In those experiments, artificial enhancement or suppression of the slow inhibitory synapse from Si2 onto its contralateral Si3 partner within a half-center module produced reliable and bidirectional modulation of the swim rhythm. Whenever the membrane potential of an Si2 neuron crossed a defined threshold (approximately 50\% of spike height), a computer-generated synaptic current was injected into the opposite Si3 neuron to augment the endogenous Si2$\rightarrow$Si3 inhibition (dynamic-clamp setup shown in Fig.~10 of Ref.~\cite{sakurai2022bursting}). When this synaptic conductance was artificially increased (500~nS), the burst duration shortened and the cycle period decreased (Fig.~10A). Conversely, when inhibition was counteracted by injecting a negative conductance to oppose Si2-evoked IPSPs in Si3, burst duration lengthened and the period increased (Fig.~10C from Ref.~\cite{sakurai2022bursting}). The summary plot in Fig.~10D shows the monotonic relationship between artificial synaptic strength and motor period: strengthening inhibition accelerates the rhythm, whereas weakening it slows the rhythm. This is the de-facto proof that the reverse inhibition in the excitatory-inhibitory module provides the pivot mechanism of temporal regulation of network-level rhythms-genesis pre-built-in the {\em Dendroniotus iris} swim  CPG. 
+
+
+Thus, even though full developmental electrophysiological recordings remain unavailable, these dynamic-clamp manipulations provide strong functional evidence that the slow inhibitory pathway from Si2 to Si3 is a major determinant of rhythm timing in the swim CPG. This capacity for temporal rescaling represents a key adaptive feature for an animal that experiences dramatic changes in body size, neuromuscular load, and conduction delays over its lifespan. By flexibly adjusting burst duration and cycle period, the CPG preserves effective and energetically efficient swimming across ontogeny—from rapid escape strokes in juveniles to more sustained locomotion in large adults.  
+
+\subsection{Resilience to pulse perturbations. Fact check list II}
+
+\begin{figure*}[tbh!]
+\centering
+\includegraphics[width=.9999\textwidth]{../jack_figs/5_all_6_panels_circuits_shorter.jpg}
+\caption{{\bf Validation of model resilience through targeted perturbations. Fact-check list I:} Compare the six modeling panels with their corresponding experimental originals shown in Figs.~5A–C and E–G of Ref.~\cite{SakuraiKatz2016}. For empirical evidence of network resilience, see Fig.~5 in Ref.~\cite{SakuraiKatz2017}; for experimental proof of post-inhibitory rebound (PIR) in the CPG interneurons, see Fig.~5 in Ref.~\cite{sakurai2022bursting}.
+The figure compares specific and distinct responses of the modeled swim CPG to targeted perturbations—produced by injecting hyper-polarizing and depolarizing current pulses (indicated by red vertical arrows) into selected interneurons—with those observed experimentally. The close correspondence between the model and biological data validates the CPG model and demonstrates the intrinsic resilience of both systems to recover and reestablish normal rhythmic swim patterns following transient disturbances. }
+\label{fig:perturbation_responses}
+\end{figure*}
+
+To validate our computational model against experimental observations, we reproduced a series of key perturbation experiments first established in the original \textit{Dendronotus iris} swim CPG studies \cite{SakuraiKatz2016}.  These classical experiments assess the circuit's resilience by delivering brief current pulses to specifically targeted interneurons during ongoing control swim episodes. By selectively hyper-polarizing or depolarizing individual CPG elements, we examine how the model network (i) responds to transient perturbations and (ii) subsequently recovers, if at all, its characteristic oscillatory pattern. This approach enables us to determine whether the model faithfully captures the stability, robustness, and recovery dynamics that define the biological CPG, thereby providing a rigorous benchmark for model fidelity and biological realism. We point out that all shown validated responses by the CPG model are {\em typical}, meaning that in simulations, we used some random  conditions for initial states of all four CPG interneurons (and synapses), in addition to adding a calibrated colored noise (up to 20Hz) to simulate ``robustness'' of its outcome. This should explain why (initial phase) fact-check trials may look different.    
+
+We invite the Reader to compare the model's responses with the corresponding neurophysiological recordings graphically summarized in Figs.~5A--C and E--G of the earlier experimental study~\cite{SakuraiKatz2016}. In the sections that follow, we apply the same strategy to validate additional components of the computational network, including its synaptic mechanisms and dynamic response properties, through three further series of targeted perturbation experiments. This systematic, experiment-by-experiment ``fact-checking'' framework ensures that each functional motif of the modeled swim CPG is grounded in, and quantitatively consistent with, its biological counterpart. Such direct comparisons demonstrate that the model faithfully reproduces the stability, resilience, and restoration of the biological rhythm following transient perturbations. It is important to note, however, that this perturbation methodology is inherently artificial and available only in controlled neurophysiological and computational preparations; such precisely timed and targeted manipulations cannot be performed in vivo, where perturbations arise instead from natural sensory feedback, motor load, and neuromodulatory influences.
+
+Figure~\ref{fig:perturbation_responses} is the first manifestation or a demonstration the model's ability to reproduce the diverse range of perturbation responses observed experimentally. The current injections, delivered at precisely timed moments within the swim cycle (indicated by red arrows), produce characteristic disruptions that reveal the underlying network dynamics. Particularly notable are the responses to perturbations applied during different phases of the swim cycle. Early-phase injections tend to reset the rhythm more completely, often triggering a brief period of synchronization before normal antiphase relationships resume. Mid-cycle perturbations typically cause more localized disruptions, with the affected neuron dropping out temporarily while its contralateral partner continues relatively unperturbed. Late-phase injections often advance or delay burst termination, demonstrating the critical timing relationships that govern cycle transitions.
+
+
+{\bf Fact-check 2.1.}
+For a start in the first fast check, Fig.~\ref{fig:perturbation_responses}A shows that a brief depolarizing pulse applied to the Si3L neuron is sufficient to produce an immediate cessation of network bursting. As soon as the depolarization is removed, the rhythm resumes almost instantaneously, providing a clear {\em de~facto} demonstration of the CPG's resilience. As the spike frequency in Si3L increases during the perturbation, it triggers a feed-forward cascade of downstream effects in the rest of the network. Most notably, the contralateral Si3R neuron becomes hyperpolarized and quiescent due to strong inhibition originating from Si3L. A similar inhibitory influence silences the contralateral Si2R neuron as well, reflecting the diagonal inhibitory projection pattern inherent to the CPG architecture. Meanwhile, the ipsilateral Si2L neuron remains active and continues to spike, as expected for an Si2 neuron receiving tonic excitatory drive from Si1 neurons in the absence of competing synaptic inputs (see Fig.~\ref{fig:fig1}A and the CPG circuitry in the inset of Fig.~\ref{fig:bodysize_collage}A). Thus, this transient perturbation reveals the asymmetric and distributed nature of control in the circuit, while further demonstrating rapid and reliable recovery of coordinated bursting once the perturbation is removed.      
+
+
+{\bf Fact-check 2.2.} Next, Fig.~\ref{fig:perturbation_responses}B represents a special case within this first validation set, as it is the only perturbation experiment in which network bursting is not completely halted by the applied hyperpolarizing pulse. In this condition, the targeted Si2R neuron is [strongly] inhibited, yet it continues to make transient attempts to rejoin the rhythm. This behavior underscores a critical feature of the swim CPG: the circuit does not collapse even when a major inhibitory node is silenced; instead, activity persists through alternative pathways. From a modeling perspective, this experiment proved to be the most challenging to reproduce. Several initial network configurations failed to yield the observed biological response, either suppressing the rhythm entirely or producing unstable dynamics inconsistent with physiological recordings. The decisive breakthrough came when we recognized that the cross-diagonal coupling between Si3L and Si2R (and symmetrically, Si3R and Si2L) constitutes the core oscillatory engine of the swim network. In other words, the twisted excitatory--inhibitory modules are not auxiliary features but rather the primary rhythm-generating mechanism, with the two half-center oscillators (Si2 and Si3 pairs) providing essential stabilizing and phase-structuring support. This insight is reflected in Fig.~\ref{fig:perturbation_responses}B, where the Si3R--Si2L module maintains the rhythmic drive despite suppression of Si2R, operating in concert with the robust anti-phase alternation between the Si3 neurons. Thus, what initially appeared as an ``anomalous'' perturbation response instead revealed a fundamental architectural principle: the swim CPG relies on a diagonally organized excitatory--inhibitory engine, which ensures that rhythm generation is not solely dependent on any single interneuron or simple half-center architecture. The biological system, and now the model, exploits this distributed structure to preserve oscillatory momentum even under significant unilateral inhibition.    
+
+
+{\bf Fact-check 2.3.} The third validation case is shown in Fig.~\ref{fig:perturbation_responses}C, where both Si2 interneurons are simultaneously hyperpolarized and effectively driven into a suppressed state. As observed experimentally, the model circuit does recover from this bilateral inhibition, but the restoration of robust rhythmic bursting takes noticeably longer than in the unilateral perturbation cases. This delayed recovery highlights the important supporting role that the Si2 neurons play in stabilizing and sustaining the ongoing pattern, even though they are not the primary initiators of the rhythm.
+Closer inspection of the membrane traces reveals small, fast subthreshold oscillations in the inhibited Si2 neurons during the suppression period. These fluctuations may arise from weak electrical coupling within the Si2 and Si3 pairs, providing a passive conduit for residual oscillatory drive from the active Si3 neurons. Alternatively, they may result from a purely synaptic effect: fast, but insufficient, excitatory input delivered from the spiking Si3 cells to the silenced Si2 partners. Most likely, both mechanisms contribute to the observed micro-oscillations. Unlike chemical synapses, electrical connections are bidirectional and tend to help equalize membrane potentials across coupled partners; thus, even when the Si2 neurons are deeply inhibited, gap-junction coupling can transiently nudge them toward the oscillatory state maintained by the Si3 neurons. The extended latency to full recovery underscores that, although the Si3-driven diagonal modules provide the fundamental oscillatory engine, the Si2 interneurons and their weak electrical coupling contribute importantly to rhythm stabilization and re-engagement after perturbation.
+
+
+{\bf Fact-check 2.4.} In the next perturbation experiment (Fig.~\ref{fig:perturbation_responses}D), a positive current pulse is applied to Si3R, forcing it into a sustained depolarized (tonically) spiking state with a high frequency. This perturbation disrupts normal alternation and temporarily abolishes the coordinated network bursting observed during control swimming. Once the pulse terminates, however, the circuit rapidly returns to its characteristic antiphase rhythm, demonstrating once again the strong resilience and attractor-like behavior of the swim CPG.
+Mechanistically, this response can be interpreted as follows. The forced high-frequency firing of Si3R drives its diagonal partner Si2L into a tonic spiking mode, generating a dominance of the right-side excitatory module. The resulting strong reciprocal inhibition suppresses both contralateral partners (Si3L and Si2R), locking them in a hyperpolarized state until the perturbation ends. Interestingly, one can observe intermittent isolated spikes in the electrically coupled Si3L and Si2R neurons during this period, indicating that electrical coupling still allows small depolarizing excursions driven by the active module, even though they are insufficient to overcome the combined inhibitory pressure. As soon as the depolarizing drive is removed, the suppressed contralateral neurons quickly regain their intrinsic excitability and the normal left--right alternation pattern re-emerges, confirming that the perturbation perturbs the phase of the rhythm rather than destroying the underlying oscillatory mechanism.
+
+\begin{figure*}[tbh!]
+\centering 
+\includegraphics[width=0.8\textwidth]{../jack_figs/7_4_panels.jpg}
+%\includegraphics[width=.37\textwidth]{../jack_figs/7a_als1.jpg}~~~~~
+%\includegraphics[width=.37\textwidth]{../jack_figs/7b_als2.jpg}\\
+%\includegraphics[width=.37\textwidth]{../jack_figs/7c_als.jpg}~~~~~
+%\includegraphics[width=.37\textwidth]{../jack_figs/7d_als1.jpg}
+\caption{{\bf Symmetric perturbation experiments validating the swim CPG model. Fact-check list II}: Compare the four modeling panels with their corresponding experimental originals shown in Figs.~7Ai–Di of Ref.~\cite{SakuraiKatz2016}.
+The swim CPG model exhibits responses during control swims that closely match the biological data under various temporal perturbations—produced by applying hyperpolarizing or depolarizing current pulses (red vertical arrows) to targeted interneurons—thereby validating the model against its experimental counterparts. These results confirm that the modeled CPG reproduces the timing, polarity, and recovery dynamics of the living network across a range of perturbation strengths.}
+\label{fig:group_fig7}
+\end{figure*}
+
+~\\
+{\bf Fact-check 2.5.} is presented by Fig.~\ref{fig:perturbation_responses}E: here, the targeted neuron for an negative current pulse is chosen to be be Si3R  that becomes silenced and then it silences its counter-lateral partner -- Si2L through the the only coupling -- the electrical synapse to equate the membrane voltages in both inactive neurons. As such, Si3L receiving no inhibition goes to its unperturbed, tonically spiking state, and so does the driven Si2R. Note that due to backward inhibitory synapse, the spike rates in both neurons are similarly lower than when they are isolated from each other, which the electrical synaptic interaction.   
+
+~\\
+{\bf Fact-check 2.6.} is the last one in this series. In this case, both Si3-neurons are hyperpolarized by negative pulses. This shuts them down, and in turn both Si2s as well, which are initially set to be on a borderline between tonic spiking and quiescent activities by default.  As soon as the negative perturbations are gone, the CPG circuit restores the control swim rhythm. This experiment is indicative that the Si3s are needed to initiate the network-level of bursting when they receive an excitatory drive from Si1s.  \\   
+
+%%%%%%%%%%%%%%%%% 
+
+We conclude this section by arguing that the developed CPG model successfully captures the asymmetric recovery patterns observed experimentally, where perturbations to Si2 neurons produce different response profiles than equivalent manipulations of Si3 neurons. This reflects the distinct functional roles of these cell types within the circuit architecture: Si3 neurons serve as the primary rhythm generators, while Si2 neurons provide crucial feedback that shapes burst termination and cycle timing.
+
+Depolarizing current injections reveal the circuit's ability to maintain coordination even when individual neurons are artificially driven beyond their normal activity levels. Rather than disrupting the entire network, these perturbations often result in temporary recruitment of additional spiking activity that gradually returns to baseline levels as the injected current subsides. This demonstrates the stabilizing influence of the network's inhibitory connections and the robustness of the underlying oscillatory mechanisms.
+
+The faithful reproduction of these experimental perturbation responses provides strong validation for our model's structural and dynamical accuracy. The consistency between simulated and experimental results across multiple perturbation conditions supports the biological relevance of our chosen parameter values and connectivity patterns, confirming that the essential features of the \textit{Dendronotus iris} swim CPG have been successfully captured in our computational framework.
+
+The above six experiments prove  the remarkable/stunning ability of the swim CPG network to recover from complete silencing by applied external perturbations. They show that extended hyper-polarizing pulses applied to multiple neurons can drive the entire circuit into a prolonged quiescent state, mimicking conditions that might occur during behavioral transitions or environmental stress. The model accurately captures the experimental observation that such suppression is reversible—upon perturbation withdrawal, the network undergoes a characteristic restart sequence with gradually increasing burst amplitude and frequency until normal swimming patterns are fully restored.
+
+These recovery dynamics reveal important insights into the circuit's underlying structure. The gradual nature of pattern restoration, rather than immediate resumption of normal activity, suggests that the network relies on slow synaptic processes to maintain its characteristic timing relationships. This dependence on accumulating synaptic variables provides both stability during normal operation and the flexibility needed to recover from severe disruptions.
+
+
+%%%%%%%
+\subsection{Resilience to pulse perturbations. Fact-check III}
+% 
+Building on the perturbation analysis presented above, the following Fig.~\ref{fig:group_fig7} extends our model validation to encompass a broader spectrum of temporal disruptions and recovery patterns generated by the CPG network in the control case (normal swim). These additional experiments probe the network's dynamic stability across different operational regimes, from high-frequency bursting to prolonged quiescent states, demonstrating the versatility and robustness of the underlying oscillatory mechanisms. Unlike the previous fact-check II, this time we use symmetric perturbations by injecting current pulses in both left and right interneurons. The original neurophysiological experiments, which these computational section is inspired and based on, are summarized in Figs.~7Ai–Di of Ref.~\cite{SakuraiKatz2016}.
+
+~\\
+{\bf Fact-check 3.1.} The first panel in Fig.~\ref{fig:group_fig7} reveals the network's response to perturbations during rapid bursting episodes, where brief hyper-polarizing pulses applied to Si3-neurons create transient gaps in the spike trains. In this setup, all four interneurons are set into the hyperpolarized quiescent mode initially. The model accurately reproduces the experimental observation showing how such disruptions affect the network's state. The network's ability to maintain temporal coherence despite these interruptions strongly suggests that i)  the uni-directional inhibitory coupling (described by the logistic synapse model) between ipsilateral Si2 and Si3 neurons changes {\em strongly} nonlinearly depending on the spike rate in Si2 and cant halt down spiking inactivity Si3s; ii) while counter-lateral inhibition (described by the $\alpha$-synapse model) between Si2 does not become strong enough to halt an either interneuron on the top Si2-based HCO. 
+
+~\\
+{\bf Fact-check 3.2.} The purpose of the next experiment is to demonstrate that injecting positive, excretory current pulses in the biological and mathematical Si3-neurons alone does not regulate the network burst frequency in the control swim. In addition it de-fact proves that this 4-cell CPG circuit is stable or resistant (not resilient) to such perturbations. Note though injecting positive, excretory current pulses is one of the mechanisms that initiate and terminate the swim network bursting in the circuit, see the next subsection~{\em Si1 controls swim initiation and termination} . 
+
+
+~\\
+{\bf Fact-check 3.3.} The panel~C in Fig.~\ref{fig:group_fig7} demonstrates the network's capacity to handle perturbations in a different way for extended periods. One can see that Si2 neurons are hyperpolarized sufficiently yo become quiescent by negative current pulses to prevent any spiking activity that could be potentially triggered by the excitatory Si3-neurons that switched into tonic-spiking activity with a relatively low frequency after both Si3-neurons received simultaneously positive current pulses, The panel is a {\em de-facto} proof that the interneurons, at least Si2-models, as soon as the they are quickly released from exhibition both exhibit post-inhibitory rebounds, producing a train of spikes with a frequency adaption on \'e route back to the natural quiescent state.  Along with the previous experiment, this one demonstrates that the normal swim bursting rhythm can not be initiated externally through such a combination or protocol, and that we can try out computationally other reliable options yo fully and efficiently control and regulate this and swim other CPG circuits.        
+
+~\\
+{\bf Fact-check 3.4.} The final panel~D in Fig.~\ref{fig:group_fig7} showcases one of the most striking features of the swim CPG -- its dynamic stability and/or structural stability (rather than its resilience to short term perturbations): namely, forced depolarization of all four interneurons of the CPG cannot accelerate (speed up) the established swim pattern in the control case. This experiment is another {\em de-facto} proof that the mechanisms regulating the bursting period in the swim patterns are hardly due to the fast feed-forward excitations carried out by the synapses projected from the Si1s onto Si3-interneurons alone. In the following section we explore an additional  mechanism of synaptic regulation due to the neuromodulation capable of dynamically varying the synaptic activity strength on the top of the direct excitation from Si1s to stimulate spike rate in the excitatory Si3-neurons.      
+
+The model's faithful reproduction of these diverse perturbation responses across multiple operational states provides compelling evidence for its biological accuracy. The consistency between simulated and experimental recovery patterns validates not only the static connectivity of our model but also the dynamic properties of its synaptic interactions, confirming that our computational framework captures the essential mechanisms underlying the \textit{Dendronotus iris} swim CPG's structural stability and dynamic resistance quickly emerging throughout several positive and negative feed back loops, which are regulated by the fast excitatory and slow and fast inhibitory synaptic coupling. Note too that none out of four experiments discussed above was meant to initiate or restore the swim patterns to probe its natural resilience of the established networking bursting to short pulse perturbations as discussed earlier. 
+
+
+\subsection{Si1 controls swim initiation and termination. Fact-check IV}
+%
+\begin{figure*}[tbp]
+\centering
+\includegraphics[width=.59\textwidth]{../jack_figs/s1_Fig2A_drives_cpg_als_circuit.jpg}\
+\includegraphics[width=.47\textwidth]{../jack_figs/s1_Fig3A_drives_cpg1.jpg}~~~
+\includegraphics[width=.43\textwidth]{../jack_figs/s1_drives_CPG_Fig3B_No_NM_als.jpg}
+\caption{{\bf Role of Si1–Si3 interactions in rhythmogenesis and network resilience. Fact-check list III:} Compare the modeling results with their experimental counterparts reported in Ref.~\cite{sakurai2019command}: (i) panel A corresponds to Fig.~2A, and (ii) panels B and C correspond to Figs.~3A and 3B, respectively. (A) the swim CPG circuitry where the Si1-neurons provide excitatory drive to both Si3s and regulate the regulate neuromodulation in the excitatory synapses from Si3s into Si2s.     
+(B) Excitatory drive originating from interneuron Si1 (or the Si1 neuronal pair) activates the Si3 neurons, thereby {\em gradually} initiating and subsequently terminating—the rhythmic bursting that defines the operation of the swim CPG. In the absence of neuromodulatory input, this Si1$\to$Si3 pathway alone can sustain transient rhythmic activity across the core network, as also illustrated in panels~C and D.
+(C) [Abrupt] hyper-polarization of the Si1 neurons halts rhythmogenesis within the CPG, leading to an immediate cessation of oscillatory activity. Upon release from this perturbation, the CPG rapidly recovers and resumes coordinated bursting, demonstrating its intrinsic resilience and its built-in reassembling capacity. This recovery emphasizes the pivotal role of the Si3 neurons in maintaining rhythmic propagation as long as sufficient excitatory drive persists. (C) Fast Si1 depolarization followed by a few later hyper-polarization triggers, maintains and terminates the swim episode in the CPG circuit. \\
+Shown underneath the voltage waveforms are the simulated neurotransmitter release probabilities using the synaptic $\alpha$-model (in red for excitatory connections Si3s $\to$ Si2s; in grey for excitatory connections Si1s $\to$ Si3s, in light blue for reciprocal inhibition between Si2s and well as between Si3s light red) and logistic (in dark blue for inhibitory connections Si2s $\to$ Si3s) models for the fast and slow chemical synapses, resp.   
+}
+\label{fig:si1_control}
+\end{figure*}
+
+In this concluding section of this paper we would like to explore and discuss how the inclusion of 
+neuromodulation regulated by the Si1-neurons can affect the rhythmogenesis of the {\textit{Dendronotus iris}} 
+swim CPG model. This set of three computational experiments is meant to see whether the network model can meet and pass its final verification or fast-check inspired by the neurophysiological experiments originally reported in Ref.~\cite{sakurai2019command}. Specifically, the Reader is welcome to compare the results summarized in panel~A of Fig.~2A, and panels~B and C in Figs.~3A and 3B from Ref.~\cite{sakurai2019command} with the  corresponding three panels of the modeling Fig.~\ref{fig:si1_control}, respectively.  In short, all three panels mimic the effect of direct depolarizing drives from Si1 reproducing the experimentally observed role of the Si1-neurons as a command-obey like initiator and terminator of the swim episodes in the CPG circuit. 
+
+The three panels in Fig.~\ref{fig:si1_control} illustrate distinct manifestations of Si1 drive under control conditions (without neuromodulation inclusion): relatively long Si1 activation through external depolarization  triggers stably prolonged swim episodes  as shown in panels~A and C; and a sustained hyper-polarization offsetting Si1s terminate ongoing network bursting in the CPG model in panel~B.
+
+~\\
+{\bf Fact-check 4.1.} One can see from the bottom voltage (grey) trace in panel~A in Fig.~\ref{fig:si1_control} that a transient, gradually increasing and decreasing depolarization of the Si1-neurons first 1) raises and lowers their spike frequency, which, in turn, accordingly increases and decreases the excitatory neurotransmitter rates, as seen in the (grey) trace underneath. Meanwhile, the excitatory drive from Si1s raises the spike frequency in both Si3s, which therefore kicks the strength into  its fast outgoing synapses projected onto their counter-lateral parts, which starts the rhythms-genesis, as we discussed the process above in detail. Specifically, we can see from the voltage and synaptic rate traces that the emerging spiking activity in Si1s precedes the onset of Si3 burst trains and reliably gates the transition from quiescence to rhythmic activity. The model reproduces the short latency between Si1 activation and Si3 recruitment seen experimentally, consistent with a potent monosynaptic excitatory pathway from Si1 to both Si3 neurons. Voltage traces show that Si3 cells are the first to enter the high-frequency spiking regime, followed shortly by Si2 recruitment; this sequence supports the anatomy and functional role inferred in the empirical studies. The key home-taken message from this experiment is that time-varying excitatory drive alone can noticeably regulate the period of network bursting from the start to the end of this control swim episode.
+
+ ~\\
+{\bf Fact-check 4.2.} The second panel~C in in Fig.~\ref{fig:si1_control} highlights the precision with which Si1 controls episode offset. Abrupt withdrawal of Si1 depolarization is followed by a rapid decay of Si3 activity and a coordinated shutdown of the entire four-cell network. The shutdown sequence typically follows Si3 fall-off, then progressive reduction of Si2 activity, consistent with Si3 serving as the primary driver and Si2 providing the inhibitory feedback that sculpts burst termination. The traces also show brief rebound-like events at offset that reflect the interaction between synaptic accumulation and intrinsic cellular recovery dynamics.
+
+ ~\\
+{\bf Fact-check 4.3.} The last panel~D in Fig.~\ref{fig:si1_control} demonstrates that fast prolonged Si1 depolarization converts intermittent bursting into sustained network-level oscillations with constant period in the swim circuit model. During sustained drive the Si3 neurons exhibit an elevated intra-burst spike frequency and slower inter-burst recovery, while the Si2 neurons retain their modulatory feedback role -- regulating burst duration and therefore determine burst termination. Importantly, termination of Si1 drive consistently precedes burst cessation in Si3-interneurons, indicating that Si1-neurons  provides a permissive excitatory tone required to maintain long bouts of swimming in the absence of neuromodulatory enhancement.
+
+Together, these panels compete the detail validation of the {\em \textit{Dendronotus iris}} swim CPG model with its central implementation of the unidirectional Si1~$\to$~Si3 excitatory pathway and its role as an network controller. They also emphasize how a simple excitatory drive, without additional neuromodulatory changes, can gate network state transitions while preserving the intrinsic burst-shaping interactions between Si2 and Si3. It is worth re-establishing that these computer simulations one-to-one reproduce and [can] further extend the experimental findings reported in the original experimental papers~\cite{sakurai2019command, SakuraiKatz2016} by demonstrating the dynamical sequences associated with Si1-mediated initiation and termination of the swim motor program.
+
+
+
+
+\subsection{Role of neuromodulation and its modeling. Burst frequency control}
+
+
+
+\section{*Discussion and future computational research}
+
+
+This study presents a biophysically grounded model of the \textit{Dendronotus iris} swim CPG that integrates cellular, synaptic, and network mechanisms to explain the remarkable resilience and adaptability of its rhythmic motor output. By incorporating both fast and slow synaptic processes within a four-cell architecture, we demonstrate that stable bursting activity emerges from the interaction of multiple oscillatory subsystems rather than from a single dominant rhythmogenic loop. The model reproduces experimentally observed behaviors—including recovery from perturbations, developmental scaling of swim period, and command-neuron control—thereby validating its biological relevance.
+
+A key mechanistic insight is that the kinetic properties of the slow inhibitory synapse from Si2 to Si3 serve as an intrinsic control parameter for the network’s temporal organization. Modulation of this synaptic timescale dynamically regulates burst duration and overall cycle period, providing a parsimonious explanation for developmental and contextual adjustments in swim frequency. This principle extends the classical view of central pattern generation by demonstrating that \textit{synaptic plasticity kinetics}, rather than conductance magnitude alone, can encode controllability and adaptive flexibility—allowing neural circuits to achieve both stability and tunable variability.
+
+Future computational research will extend this framework in several directions. First, incorporating detailed calcium-dependent models of synaptic augmentation and short-term facilitation will test molecular hypotheses regarding the regulation of inhibitory kinetics, including the roles of distinct synaptotagmin isoforms and presynaptic calcium sensors. Second, systematic continuation and bifurcation analyses will map transitions between rhythmic regimes, revealing how resilience emerges from the geometry of the underlying slow–fast manifolds and Shilnikov-type dynamical structures. Third, expanding the model to include sensory feedback and descending inputs will enable exploration of context-dependent modulation and behavioral switching. Finally, applying these principles to homologous CPGs in related species and to bio-inspired robotic controllers will test the generality of kinetic control mechanisms across biological and artificial systems.
+
+In summary, this work establishes a foundational model linking synaptic timescales to network resilience in rhythmic motor circuits. It provides a theoretical bridge between dynamical-systems analysis and synaptic biophysics, opening the way toward unified principles of adaptive rhythmogenesis that span species, developmental stages, and synthetic neural architectures.
+
+
+\label{fig:supp} 
+\section*{Appendix: a basic Hodgkin-Huxley based model of the swim CPG interneuron (SiN)} \label{sec:appendix1}
+The dynamics of the membrane potential, $V$, is governed by the following equation:
+\begin{equation}
+ 	C_{m} {V}^\prime = -I_{I} - I_K - I_{T}  - I_{KCa} -  I_{h}  - I_{leak}  - I_{syn}.  \label{a1}
+ \end{equation}
+ The fast inward sodium and calcium $I_{I}$-current is given by   
+\begin{equation}
+I_{I}=g_{I}\,h\, m^{3}_{\infty}(V)(V-E_{I}), 
+ \end{equation}
+with the reversal potential $E_{I}=30$mV and the maximal conductance value $g_{I}=4$nS, and where the {\em infinite $\infty$ }-functions are given by   
+\begin{align}
+ m_{\infty}(V) &= \frac{\alpha_{m}(V)}{\alpha_{m}(V) +\beta_{m}(V)},   \\
+ \alpha_{m}(V) &= 0.1 \frac{50-V_s}{-1+e^{(50-V_s)/10}}\ , \\ 
+ \quad \beta_{m}(V) &= 4 e^{(25-V_s)/18}.  
+\end{align}
+ The dynamics of its inactivation  gating variable $h$ is given by      
+\begin{align}
+ {h}^\prime &=  \frac{h_{\infty}(V)-h}{ {\tau_{h}(V)} }, \quad \mbox{with} \quad \\
+h_{\infty}(V) &= \frac{\alpha_{h}(V)}{\alpha_{h}(V) +\beta_{h}(V)}\quad \mbox{and} \\
+ \quad \tau_{h}(V) &= \frac{12.5}{\alpha_{h}(V) +\beta_{h}(V)}, 
+\end{align}
+where 
+ \begin{align}
+ \alpha_{h}(V) &= 0.07 e^{(25-V_s)/20}, \quad 
+ \beta_{h}(V) &= \frac{1}{1+e^{(55-V_s)/10}}, \\
+ V_s &= \frac{127V+8265}{105}{\rm mV}.
+ \end{align} 
+  The fast potassium $I_K$-current is given by the equation  
+\begin{equation}
+I_K=g_{K} n^{4}(V-E_{K}),  
+\end{equation}
+with the reversal potential $E_{K}=-75$mV and the maximal conductance set as $g_K=0.3$nS. The dynamics of inactivation gating variable are described by 
+\begin{align}
+{n}^\prime &= \frac{n_{\infty}(V)-n}{\tau_{n}(V)}, \quad \mbox{with} \quad \\
+n_{\infty}(V) &= \frac{\alpha_{n}(V)}{\alpha_{n}(V) +\beta_{n}(V)} \quad \mbox{and} \quad \\
+\tau_{n}(V) &= \frac{12.5}{\alpha_{n}(V) +\beta_{n}(V)}, \quad \mbox{where} \quad \\
+\alpha_{n}(V) &= 0.01 \frac{55-V_s}{e^{(55-V_s)/10}-1} \quad \mbox{} \quad \\
+\beta_{n}(V) &= 0.125 e^{(45-V_s)/80}.
+\end{align}	
+The rapidly depolarizing h-current is given by 
+\begin{equation}
+I_{h}=g_{h} \frac{y (V-E_{h})}{(1+e^{-(V-63)/7.8)})^3}, 
+\end{equation}
+with $E_{h}=70$mV, and $g_h=0.0006$nS; the dynamics of its $y$-activation probability is described by 
+ \begin{equation}
+{y}^\prime = \frac{1}{2} \left [ \frac{1}{1+e^{10(V-50)}}-y \right ]/ \left [ 7.1+\frac{10.4}{1+e^{(V+68)/2.2}} \right ], 
+\end{equation}	
+whereas the leak current is given by 
+\begin{align}
+I_{leak} &=g_{L} (V-E_{L}), 
+\end{align}
+with $E_{L} =-40{\rm mV}$, and $g_{L}=0.003{\rm nS}$. The sub-group of slow currents in the model includes the TTX-resistant sodium and calcium $I_{T}$-current given by   \begin{align}
+ I_{T} &= g_{T} x (V-E_{I}),
+\end{align}
+with $E_{I} =30{\rm mV}$ and $g_{T}=0.01{\rm nS}$, where the dynamics of its slow activation variable are described by  
+ \begin{align}
+{x}^\prime &= \frac{x_{\infty}(V)-x}{\tau_{x}}, \quad \mbox{where} \\ 
+\quad x_{\infty} &= \frac{1}{1+e^{-0.15(V+50-\Delta_x)}},
+\end{align}\label{eqttx} 
+with the time constant $\tau_{x}$ set as 100 or 235ms in this study. The slowest outward ${\rm Ca}^{2+}$ activated $K^+$ current given by  
+\begin{equation}
+I_{KCa} =g_{KCa}\frac{[\rm Ca]_i}{0.5+[\rm Ca]_i}(V-E_{K})
+ \label{IKCa}
+\end{equation}
+with  $E_{K}=-75\mbox{mV}$, and $g_{KCa}=0.03$, where the dynamics of intracellular calcium concentration is governed by 
+\begin{equation}
+{[\rm Ca]}^\prime  =  \rho \left ( K_{c}\, x\, (E_{\rm Ca}-V + \Delta_{\rm Ca})-[\rm Ca] \right  )  \label{eqCa}
+\end{equation}
+with the Nernst reversal potential  $E_{Ca}=140$mV, and small constants $\rho= 0.0003{\rm ms}^{-1}$ and  $K_c=0.0085{\rm mV}^{-1}$.
+
+\section*{References}
+
+\begin{thebibliography}{99}
+\bibliographystyle{unsrt}
+ 
+\bibitem{Wilson1961}
+DM~Wilson.
+\newblock The central nervous control of flight in a locust.
+\newblock {\em Journal of Experimental Biology}, 38(2):471--490, 1961.
+
+\bibitem{MarderCalabrese1996}
+E~Marder and RL~Calabrese.
+\newblock Principles of rhythmic motor pattern generation.
+\newblock {\em {Physiological Reviews}}, {76}({3}):687--717, {1996}.
+
+\bibitem{Kiehn2006}
+O~Kiehn.
+\newblock Locomotor circuits in the mammalian spinal cord.
+\newblock {\em Annual Review of Neuroscience}, 29:279--306, 2006.
+
+\bibitem{Marder2023}
+E~Marder.
+\newblock Individual variability, statistics, and the resilience of nervous systems of crabs and humans to temperature and other perturbations.
+\newblock {\em eNeuro}, 10(11), 2023.
+
+\bibitem{Marder2011}
+E~Marder.
+\newblock Variability, compensation, and modulation in neurons and circuits.
+\newblock {\em Proceedings of the National Academy of Sciences USA}, 108(Suppl 3):15542--15548, 2011.
+
+\bibitem{OLeary2014}
+T~O'Leary, AH~Williams, A~Franci, and E~Marder.
+\newblock Cell types, network homeostasis, and pathological compensation from a biologically plausible ion channel expression model.
+\newblock {\em Neuron}, 82(4):809--821, 2014.
+
+\bibitem{Franci2020}
+A~Franci, T~O'Leary  and J~Golowasch.
+\newblock Positive dynamical networks in neuronal regulation: How tunable variability coexists with robustness.
+\newblock {\em IEEE Control Systems Letters}, 4(4):946--951, 2020.
+
+
+\bibitem{SNLK11}
+A~Sakurai, JM~Newcomb, JL~Lillvis, and PS~Katz.
+\newblock Different roles for homologous interneurons in species exhibiting
+  similar rhythmic behaviors.
+\newblock {\em Current Biology}, 21:1036, 2011.
+
+\bibitem{NSLGK012}
+JM~Newcomb, A~Sakurai, JL~Lillvis, CA~Gunaratne, and PS~Katz.
+\newblock Homology and homoplasy of swimming behaviors and neural circuits in
+  the nudipleura (mollusca, gastropoda, 
+  opistho-branchia).
+\newblock {\em Proc. Natl. Acad. Sci.}, 109(1):10669--76, 2012.
+
+\bibitem{sck2014}
+A~Sakurai, CA~Gunaratne, and PS~Katz.
+\newblock Two interconnected kernels of reciprocally inhibitory interneurons
+  underlie alternating left-right swim motor pattern generation in the mollusk
+  Melibe leonina.
+\newblock {\em J. {N}europhysiology}, 112(6):317--1328, 2014.
+
+\bibitem{sakurai2015phylogenetic}
+A~Sakurai and PS~Katz.
+\newblock Phylogenetic and individual variation in gastropod central pattern
+  generators.
+\newblock {\em J. Comparative Physiology A}, 201(9):829--839, 2015.
+
+
+\bibitem{sakurai2019command}
+A~Sakurai and PS~Katz.
+\newblock Command or obey? homologous neurons differ in hierarchical position
+  for the generation of homologous behaviors.
+\newblock {\em J. Neuroscience}, 39(33):6460--6471, 2019.
+
+\bibitem{sakurai2022bursting}
+A~Sakurai and PS~Katz.
+\newblock Bursting emerges from the complementary roles of neurons in a
+  four-cell network.
+\newblock {\em J. {N}europhysiology}, 127(4):1054--1066, 2022.
+
+\bibitem{SakuraiKatz2017}
+A~Sakurai and PS~Katz.
+\newblock Artificial Synaptic Rewiring Demonstrates that Distinct Neural Circuit Configurations
+Underlie Homologous Behaviors \newblock {\em Current Biology}, 27(4):1721--1734, 2017.
+
+
+\bibitem{SakuraiKatz2016}
+A~Sakurai and PS~Katz.
+\newblock  The central pattern generator underlying swimming in \emph{\textit{Dendronotus iris}}: A simple half-center network oscillator with a twist.
+ \newblock {\em Journal of Neurophysiology}, 116(4):1728--1742, 2016.
+
+
+\bibitem{Newcomb2012}
+JM~Newcomb, A~Sakurai, J~LLillvis, CA~Gunaratne, and PS~Katz.
+\newblock Homology and homoplasy of swimming behaviors and neural circuits in the Nudipleura (Mollusca, Gastropoda, Opisthobranchia).
+\newblock {\em Proceedings of the National Academy of Sciences USA}, 109(Suppl 1):10669--10676, 2012.
+
+\bibitem{zucker2002short}
+RS~Zucker and WG~Regehr.
+\newblock Short-term synaptic plasticity.
+\newblock {\em Annual Review of Physiology}, 64:355--405, 2002.
+
+\bibitem{scully2024chaos}
+J~Scully, C~Hinsley, D~Bloom, HGE~Meijer, and AL~Shilnikov.
+\newblock Widespread neuronal chaos induced by slow oscillating currents.
+\newblock {\em Chaos}, 34(11):113101, 2024.
+
+\bibitem{scully2024pairing}
+J~Scully, J~Bourahmah, D~Bloom, and AL~Shilnikov.
+\newblock Pairing cellular and synaptic dynamics yields flexible network oscillators.
+\newblock {\em Frontiers in Network Physiology}, 4:1397151, 2024.
+
+\bibitem{jackman2017mechanisms}
+SL~Jackman and WG~Regehr.
+\newblock The mechanisms and functions of synaptic facilitation.
+\newblock {\em Neuron}, 94(3):447--464, 2017.
+
+\bibitem{klyachko2006molecular}
+VA~Klyachko and CF~Stevens.
+\newblock Molecular mechanisms of short-term plasticity: Role of synapsin phosphorylation in augmentation and potentiation of spontaneous glutamate release.
+\newblock {\em Frontiers in Synaptic Neuroscience}, 8:12, 2006.
+
+\bibitem{NeherBrose2018}
+E~Neher and N~Brose.
+\newblock Dynamically primed synaptic vesicle states: Key to understand synaptic short-term plasticity.
+\newblock {\em Neuron}, 100(6):1283--1291, 2018.
+
+\bibitem{plant81}
+RE~Plant and M~Kim.
+\newblock Bifurcation and resonance in a model for bursting nerve cells.
+\newblock {\em Journal of Mathematical Biology}, 11:15--32, 1981.
+
+\bibitem{destexhe1994synthesis}
+Destexhe, A., Mainen, Z.F. and Sejnowski, T.J.
+\newblock Synthesis of models for excitable membranes, synaptic transmission and neuromodulation using a common kinetic formalism.
+\newblock {\em Journal of computational neuroscience}, 1(3):195--230, 1994.
+
+\bibitem{destexhe1998kinetic}
+A~Destexhe, Z~F~Mainen, and T~J~Sejnowski.
+\newblock Kinetic models of synaptic transmission.
+\newblock {\em Methods in neuronal modeling}, pages 1--25, 1998.
+
+\bibitem{Golomb96}
+D~Golomb and J~Rinzel.
+\newblock Clustering in globally coupled inhibitory neurons.
+\newblock {\em Physica D}, 72(3):259--282, 1996.
+
+
+\bibitem{Wang-Rinzel-92}
+XJ~Wang and J~Rinzel.
+\newblock Alternating and synchronous rhythms in reciprocally inhibitory model neurons.
+\newblock {\em Journal of Computational Neuroscience}, 4(1):84--97, 1992.
+
+
+A~Selverston, editor.
+\newblock {\em Model Neural Networks and Behavior}.
+\newblock Springer, Berlin, 1985.
+
+
+\bibitem{KatzHooper07}
+PS~Katz and SL~Hooper.
+\newblock Invertebrate central pattern generators.
+\newblock In G~North and RR~Greenspan, editors, {\em Invertebrate
+  Neurobiology}. Cold Spring Harbor Laboratory Press, NY, New York, 2007.
+  
+  \bibitem{CALABRESE201668}
+ RL Calabrese, and BJ~Norris and A.~Wenning.
+\newblock Microcircuit computation and evolution.
+\newblock {\em Current Opinion in Neurobiology},
+  41:68-77, 2016. 
+  
+ \bibitem{Katz2016}
+PS~Katz.
+\newblock Evolution of central pattern generators and rhythmic behaviours.
+ {\em Philos Trans R Soc Lond B Biol Sci}, 371:20150057, 2016. 
+  
+
+  \bibitem{MKM2022}
+ E~Marder, S. Kedia and EO~Morozova.
+\newblock New insights from small rhythmic circuits.
+\newblock {\em Current Opinion in Neurobiology},
+  76:102610, 2022.
+
+\bibitem{M12}
+E~Marder.
+\newblock Neuromodulation of neuronal circuits: back to the future.
+\newblock {\em Neuron}, 76:1, 2012.
+
+\bibitem{NW02}
+WH~Watson and JM~Newcomb.
+\newblock Modulation of swimming in the gastropod Melibe leonina by nitric
+  oxide.
+\newblock {\em J. Exp. Biology}, 205(3):397, 2002.
+
+\bibitem{WNT02}
+WH~Watson, JM~Newcomb, and S~Thompson.
+\newblock Neural correlates of swimming behavior in Melibe leonina.
+\newblock {\em Biol. Bulletin}, 203(2):152, 2002.
+
+\bibitem{TW05}
+S~Thompson and WH~Watson.
+\newblock Central pattern generator for swimming in Melibe.
+\newblock {\em J. Exp. Biology}, 208(7):1347, 2005.
+
+
+\bibitem{selverston1976stomatogastric}
+AI~Selverston, DF~Russell, JP~Miller, and DG~King.
+\newblock The stomatogastric nervous system: structure and function of a small
+  neural network.
+\newblock {\em Progress in neurobiology}, 7:215--289, 1976.
+
+\bibitem{stein1999neurons}
+PSG Stein, DG~Stuart, S~Grillner, and AI~Selverston.
+\newblock {\em Neurons, networks, and motor behavior}.
+\newblock MIT press, 1999.
+
+\bibitem{selverston2013model}
+AI~Selverston.
+\newblock {\em Model neural networks and behavior}.
+\newblock Springer Science \& Business Media, 2013.
+
+\bibitem{Marder1994752}
+E~Marder.
+\newblock Invertebrate neurobiology: Polymorphic neural networks.
+\newblock {\em Current Biology}, 4(8):752 -- 754, 1994.
+
+\bibitem{prinz2003functional}
+AA~Prinz, V~Thirumalai, and E~Marder.
+\newblock The functional consequences of changes in the strength and duration
+  of synaptic inputs to oscillatory neurons.
+\newblock {\em J. Neuroscience}, 23(3):943--954, 2003.
+
+\bibitem{prinz2004similar}
+AA~Prinz, D~Bucher, and E~Marder.
+\newblock Similar network activity from disparate circuit parameters.
+\newblock {\em Nature Neuroscience}, 7(12):1345--1352, 2004.
+
+\bibitem{M09}
+JM~Goaillard, AL~Taylor, D~Schulz, and E~Marder.
+\newblock Multi-dimensional measurements to understand the functional
+  consequences of animal-to-animal variation in circuit parameters.
+\newblock {\em Nature Neuroscience}, 12:1424--1430, 2009.
+
+\bibitem{Alacam2015}
+D~Ala\c{c}am and AL~Shilnikov.
+\newblock Making a swim central pattern generator out of latent parabolic
+  bursters.
+\newblock {\em International Journal of Bifurcation and Chaos}, 25(07):1540003,
+  2015.
+
+
+\bibitem{Perkel-Mulloney-74}
+DH~Perkel and B~Mulloney.
+\newblock Mechanism of post-inhibitory rebound in molluscan neurons.
+\newblock {\em Science}, 185(4146):181--183, 1974.
+
+\bibitem{SKM94}
+F~Skinner, N~Kopell, and E~Marder.
+\newblock Mechanisms for oscillation and frequency control in networks of
+  mutually inhibitory relaxation oscillators.
+\newblock {\em J. Comput. Neuroscience.}, 1:69, 1994.
+
+\bibitem{SZVC99}
+FK~Skinner, L~Zhang, JL~Perez~Velazquez, and PL~Carlen.
+\newblock Bursting in inhibitory interneuronal networks: A role for
+  gap-junctional coupling.
+\newblock {\em J. Neurophysiol}, 81:1274, 1999.
+
+\bibitem{Kopell-Ermentrout-02}
+N~Kopell and G~Ermentrout.
+\newblock {Mechanisms of phase-locking and frequency control in pairs of
+  coupled neural oscillators}.
+\newblock {\em Handbook on {D}ynamical {S}ystems}, 2:3--54, 2002.
+
+\bibitem{Angstadt-Grassmann-Theriault-Levasseur-05}
+JD~Angstadt, JL~Grassmann, KM~Theriault, and SM~Levasseur.
+\newblock {Mechanisms of post-inhibitory rebound and its modulation by
+  serotonin in excitatory swim motor neurons of the medicinal leech}.
+\newblock {\em Journal of Comparative Physiology A-Neuroethology, Sensory,
+  Neural and Behavioral Physiology}, 191(8):715--732, 2005.
+  
+\bibitem{Wang-Rinzel-92}
+XJ~Wang and J~Rinzel.
+\newblock Alternating and synchronous rhythms in reciprocally inhibitory model
+  neurons.
+\newblock {\em {J. Neural Computations}}, {4}:84--97, {1992}.
+
+\bibitem{Silverston2009}
+A~Szucs, R~Huera, MI~Rabinovich, and AL~Silverston.
+\newblock Robust microcircuit synchronization by inhibitory connections.
+\newblock {\em Neuron}, 78(61):439--453, 2009.
+
+\bibitem{Daun-Rubin-Rybak-09}
+S~Daun, JE~Rubin, and IA~Rybak.
+\newblock Control of oscillation periods and phase durations in half-center
+  central pattern generators: a comparative mechanistic analysis.
+\newblock {\em J. Computational Neuroscience}, 27(1):3--36, 2009.
+
+\bibitem{nagornov2016mixed}
+R~Nagornov, G~Osipov, M~Komarov, A~Pikovsky, and AL~Shilnikov.
+\newblock Mixed-mode synchronization between two inhibitory neurons with
+  post-inhibitory rebound.
+\newblock {\em Communications in Nonlinear Science and Numerical Simulation},
+  36:175--191, 2016.
+  
+\bibitem{SSN1996}
+AA~Sharp, FK~Skinner, and E~Marder.
+\newblock Mechanisms of oscillations in dynamics clap constructed two cell half-center circuits.
+\newblock {\em J Neurophysiology},
+  76(2):867--883, 1996
+
+\bibitem{Jalil-Belykh-Shilnikov-10}
+S~Jalil, IV~Belykh, and AL~Shilnikov.
+\newblock {Fast reciprocal inhibition can synchronize bursting neurons}.
+\newblock {\em {Physical Review E}}, {81}({4, 2}), {APR} {2010}.
+
+\bibitem{Jalil-2013}
+S~Jalil, D~Allen, J Yorker and AL~Shilnikov. \newblock {Toward robust phase-locking in Melibe swim central pattern generator models}.
+\newblock {\em J. Chaos}, {23}({4}), {2013}.
+
+\bibitem{Shilnikov2008b}
+AL~Shilnikov, R~Gordon, and IV~Belykh.
+\newblock Polyrhythmic synchronization in bursting networking motifs.
+\newblock {\em Chaos}, 18(3):037120, Sep 2008.
+
+
+\bibitem{brown}
+TG~Brown.
+\newblock The intrinsic factors in the act of progression in the mammal.
+\newblock {\em London B Biol. Society}, 84(572):308--319, 1911.
+
+\bibitem{wilson-cowen}
+HR~Wilson , JD~Cowan.
+\newblock{Excitatory and inhibitory interactions in localized populations of model neurons}
+\newblock{\em{Biophysical journal}} 12(1):1-24, Jan 1972.
+
+
+\bibitem{pinging}
+P~Tiesinga, TJ~Sejnowski
+\newblock{Cortical enlightenment: are attentional gamma oscillations driven by ING or PING?}
+\newblock{\em{Neuron}}, 63(6):727-32, Sep 2009.
+
+\bibitem{ping-b-wang}
+G~Buzs{\'a}ki, XJ~Wang.
+\newblock{Mechanisms of gamma oscillations.}
+\newblock{\em{ Annual review of neuroscience}}, 35:203-25. Jul 2012.
+
+\bibitem{ping-kopell}
+C~Burgers, S~Epstein, NJ~Kopell.
+\newblock{Background gamma rhythmicity and attention in cortical local circuits: a computational study}
+\newblock{\em{Proceedings of the National Academy of Sciences.}}, 102(19):7002-7, May 2005.
+
+\bibitem{spindle-rinzel}
+D~Golomb, XJ~Wang, J~Rinzel.
+\newblock{Synchronization properties of spindle oscillations in a thalamic reticular nucleus model.}
+\newblock{\em{Journal of neurophysiology}}, 72(3):1109-26, Sep 1994.
+\bibitem{working-memory-wang}
+N~Brunel, XJ~Wang.
+\newblock{Effects of neuromodulation in a cortical network model of object working memory dominated by recurrent inhibition.}
+\newblock{\em{Journal of computational neuroscience}}, 11:63-85, Jul 2001
+
+\bibitem{rubin-06}
+J~Rubin.
+\newblock{Bursting induced by excitatory synaptic coupling in nonidentical conditional relaxation oscillators or square-wave bursters.}
+\newblock {\em{Physical Review E}}, 74(2):021917, 2006.
+
+\bibitem{plant75}
+RE~Plant and M~Kim.
+\newblock On the mechanism underlying bursting in the Aplysia abdominal
+  ganglion R15 cell.
+\newblock {\em Math. Biosciences}, 26:357--375, 1975.
+
+\bibitem{plant76}
+RE~Plant and M~Kim.
+\newblock Mathematical description of a bursting pacemaker neuron by a
+  modification of the Hodgkin-Huxley equations.
+\newblock {\em Biophysics Journal}, 16:227--244, 1976.
+
+\bibitem{plant81}
+RE~Plant.
+\newblock Bifurcation and resonance in a model for bursting nerve cells.
+\newblock {\em J. Math. Biol}, 11:15--32, 1981.
+
+\bibitem{RP1985}
+AR~Rittenhouse and CH~Price.
+\newblock Peripheral axons of the parabolic burster neuron R15.
+\newblock {\em Brain Research}, 333:330--335, 1985.
+
+\bibitem{LL88}
+ES~Levitan and IB~Levitan.
+\newblock Serotonin acting via cyclic amp enhances both the hyper-polarizing and
+  depolarizing phases of bursting pacemaker activity in the {\em Aplysia} neuron
+  {R}15.
+\newblock {\em J Neuroscience}, 8:1152--1161, 1988.
+
+\bibitem{Rinzel1985}
+J~Rinzel.
+\newblock Bursting oscillations in an excitable membrane model.
+\newblock {\em Lecture Notes in Mathematics}, 1151:304--316, 1985.
+
+
+\bibitem{Rinzel87b}
+J~Rinzel.
+\newblock A formal classification of bursting mechanisms in excitable systems.
+\newblock In {\em Proceedings of the International Congress of Mathematicians}, AMS, pages 1578--1593, 1987.
+
+\bibitem{RL86}
+J~Rinzel and YS~Lee.
+\newblock {\em On different mechanisms for membrane potential bursting},
+  volume~66.
+\newblock In: Othmer, H.G. (ed.) Nonlinear Oscillations in Biology and
+  Chemistry: Lecture Notes in Biomathematics, Springer, Berlin, 1986.
+
+\bibitem{RL87}
+J~Rinzel and YS~Lee.
+\newblock Dissection of a model for neuronal parabolic bursting.
+\newblock {\em J. Mathematical Biology}, 25(6):653--675, 1987.
+
+
+\bibitem{CCB91}
+CC~Canavier, JW~Clark, and JH~Byrne.
+\newblock Simulation of the bursting activity of neuron {R}15 in aplysia: Role
+  of ionic currents, calcium balance, and modulatory transmitters.
+\newblock {\em J. Neurophysiology}, 66(6):2107--2124., 1991.
+
+
+\bibitem{BCCBB95}
+RJ~Butera, J~W~Jr. Clark, CC~Canavier, DA~Baxter, and JH~Byrne.
+\newblock Analysis of the effects of modulatory agents on a modeled bursting
+  neuron: Dynamic interactions between voltage and calcium dependent systems.
+\newblock {\em J. Computational Neuroscience}, 2(1):19--44, 1995.
+
+\bibitem{butera98}
+R~Butera.
+\newblock Multirhythmic bursting.
+\newblock {\em Chaos}, 8(1):274--284, 1998.
+
+\bibitem{R15}
+FH~Sieling and R~Butera.
+\newblock Aplysia {R}15 neuron.
+\newblock {\em Scholarpedia}, 6(10):4181, 2011.
+
+\end{thebibliography}
+
+\end{document}

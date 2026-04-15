@@ -1,0 +1,153 @@
+\begin{thebibliography}{34}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\providecommand{\href}[2]{#2}
+\providecommand{\path}[1]{#1}
+\providecommand{\DOIprefix}{doi: }
+\providecommand{\ArXivprefix}{arXiv: }
+\providecommand{\URLprefix}{URL: }
+\providecommand{\Pubmedprefix}{pmid: }
+\providecommand{\doi}[1]{\href{http://dx.doi.org/#1}{\path{#1}}}
+\providecommand{\Pubmed}[1]{\href{pmid:#1}{\path{#1}}}
+\providecommand{\BIBand}{and}
+\providecommand{\bibinfo}[2]{#2}
+\ifx\xfnm\undefined \def\xfnm[#1]{\unskip,\space#1}\fi
+\makeatletter\def\@biblabel#1{#1.}\makeatother
+%Type = Article
+\bibitem[{Getting(1983{\natexlab{a}})}]{Getting1983delayed}
+\bibinfo{author}{Getting, P.} (\bibinfo{year}{1983}{\natexlab{a}}). \bibinfo{title}{Mechanisms of pattern generation underlying swimming in {Tritonia}. {III}. {Intrinsic} and synaptic mechanisms for delayed excitation}.
+\newblock \bibinfo{journal}{Journal of Neurophysiology} \emph{\bibinfo{volume}{49}}, \bibinfo{pages}{1036--1050}.
+%Type = Article
+\bibitem[{Getting(1989)}]{Getting1989}
+\bibinfo{author}{Getting, P.} (\bibinfo{year}{1989}). \bibinfo{title}{Emerging principles governing the operation of neural networks}.
+\newblock \bibinfo{journal}{Annual Review of Neuroscience} \emph{\bibinfo{volume}{12}}, \bibinfo{pages}{185--204}.
+%Type = Article
+\bibitem[{Wilson(1961)}]{Wilson1961}
+\bibinfo{author}{Wilson, D.} (\bibinfo{year}{1961}). \bibinfo{title}{The central nervous control of flight in a locust}.
+\newblock \bibinfo{journal}{Journal of Experimental Biology} \emph{\bibinfo{volume}{38}}, \bibinfo{pages}{471--490}.
+%Type = Article
+\bibitem[{Marder and Calabrese(1996)}]{MarderCalabrese1996}
+\bibinfo{author}{Marder, E.}, and \bibinfo{author}{Calabrese, R.} (\bibinfo{year}{1996}). \bibinfo{title}{Principles of rhythmic motor pattern generation}.
+\newblock \bibinfo{journal}{Physiological Reviews} \emph{\bibinfo{volume}{76}}, \bibinfo{pages}{687--717}.
+%Type = Article
+\bibitem[{Kiehn(2006)}]{Kiehn2006}
+\bibinfo{author}{Kiehn, O.} (\bibinfo{year}{2006}). \bibinfo{title}{Locomotor circuits in the mammalian spinal cord}.
+\newblock \bibinfo{journal}{Annual Review of Neuroscience} \emph{\bibinfo{volume}{29}}, \bibinfo{pages}{279--306}.
+%Type = Article
+\bibitem[{Getting(1983{\natexlab{b}})}]{Getting1983network}
+\bibinfo{author}{Getting, P.} (\bibinfo{year}{1983}{\natexlab{b}}). \bibinfo{title}{Mechanisms of pattern generation underlying swimming in {Tritonia}. {II}. {Network} reconstruction}.
+\newblock \bibinfo{journal}{Journal of Neurophysiology} \emph{\bibinfo{volume}{49}}, \bibinfo{pages}{1017--1035}.
+%Type = Inproceedings
+\bibitem[{Rinzel(1987)}]{Rinzel87b}
+\bibinfo{author}{Rinzel, J.} (\bibinfo{year}{1987}). \bibinfo{title}{A formal classification of bursting mechanisms in excitable systems}.
+\newblock In \bibinfo{booktitle}{Proceedings of the International Congress of Mathematicians}. \bibinfo{publisher}{AMS} pp. \bibinfo{pages}{1578--1593}.
+%Type = Article
+\bibitem[{Rinzel and Lee(1987)}]{RL87}
+\bibinfo{author}{Rinzel, J.}, and \bibinfo{author}{Lee, Y.} (\bibinfo{year}{1987}). \bibinfo{title}{Dissection of a model for neuronal parabolic bursting}.
+\newblock \bibinfo{journal}{J. Mathematical Biology} \emph{\bibinfo{volume}{25}}, \bibinfo{pages}{653--675}.
+%Type = Article
+\bibitem[{Brown(1911)}]{brown}
+\bibinfo{author}{Brown, T.} (\bibinfo{year}{1911}). \bibinfo{title}{The intrinsic factors in the act of progression in the mammal}.
+\newblock \bibinfo{journal}{Proceedings of the Royal Society of London. Series B} \emph{\bibinfo{volume}{84}}, \bibinfo{pages}{308--319}.
+%Type = Article
+\bibitem[{Wang and Rinzel(1992)}]{Wang-Rinzel-92}
+\bibinfo{author}{Wang, X.}, and \bibinfo{author}{Rinzel, J.} (\bibinfo{year}{1992}). \bibinfo{title}{Alternating and synchronous rhythms in reciprocally inhibitory model neurons}.
+\newblock \bibinfo{journal}{Neural Computation} \emph{\bibinfo{volume}{4}}, \bibinfo{pages}{84--97}.
+%Type = Article
+\bibitem[{Skinner et~al.(1994)Skinner, Kopell and Marder}]{SKM94}
+\bibinfo{author}{Skinner, F.}, \bibinfo{author}{Kopell, N.}, and \bibinfo{author}{Marder, E.} (\bibinfo{year}{1994}). \bibinfo{title}{Mechanisms for oscillation and frequency control in reciprocally inhibitory model neural networks}.
+\newblock \bibinfo{journal}{Journal of Computational Neuroscience} \emph{\bibinfo{volume}{1}}, \bibinfo{pages}{69--87}.
+%Type = Article
+\bibitem[{Wilson and Cowan(1972)}]{WilsonCowan1972}
+\bibinfo{author}{Wilson, H.}, and \bibinfo{author}{Cowan, J.} (\bibinfo{year}{1972}). \bibinfo{title}{Excitatory and inhibitory interactions in localized populations of model neurons}.
+\newblock \bibinfo{journal}{Biophysical Journal} \emph{\bibinfo{volume}{12}}, \bibinfo{pages}{1--24}.
+%Type = Article
+\bibitem[{Marder(2011)}]{Marder2011}
+\bibinfo{author}{Marder, E.} (\bibinfo{year}{2011}). \bibinfo{title}{Variability, compensation, and modulation in neurons and circuits}.
+\newblock \bibinfo{journal}{Proceedings of the National Academy of Sciences USA} \emph{\bibinfo{volume}{108}}, \bibinfo{pages}{15542--15548}.
+%Type = Article
+\bibitem[{Nusbaum and Beenhakker(2002)}]{NusbaumBeenhakker2002}
+\bibinfo{author}{Nusbaum, M.}, and \bibinfo{author}{Beenhakker, M.} (\bibinfo{year}{2002}). \bibinfo{title}{A small-systems approach to motor pattern generation}.
+\newblock \bibinfo{journal}{Nature} \emph{\bibinfo{volume}{417}}, \bibinfo{pages}{343--350}.
+%Type = Article
+\bibitem[{Jing and Weiss(2005)}]{JingWeiss2005}
+\bibinfo{author}{Jing, J.}, and \bibinfo{author}{Weiss, K.} (\bibinfo{year}{2005}). \bibinfo{title}{Interneuronal basis of a multifunctional motor program in aplysia}.
+\newblock \bibinfo{journal}{Journal of Neuroscience} \emph{\bibinfo{volume}{25}}, \bibinfo{pages}{935--945}.
+%Type = Article
+\bibitem[{Zucker and Regehr(2002)}]{zucker2002short}
+\bibinfo{author}{Zucker, R.}, and \bibinfo{author}{Regehr, W.} (\bibinfo{year}{2002}). \bibinfo{title}{Short-term synaptic plasticity}.
+\newblock \bibinfo{journal}{Annual Review of Physiology} \emph{\bibinfo{volume}{64}}, \bibinfo{pages}{355--405}.
+%Type = Article
+\bibitem[{Jackman and Regehr(2017)}]{jackman2017mechanisms}
+\bibinfo{author}{Jackman, S.}, and \bibinfo{author}{Regehr, W.} (\bibinfo{year}{2017}). \bibinfo{title}{The mechanisms and functions of synaptic facilitation}.
+\newblock \bibinfo{journal}{Neuron} \emph{\bibinfo{volume}{94}}, \bibinfo{pages}{447--464}.
+%Type = Article
+\bibitem[{Nadim and Bucher(2014)}]{NadimBucher2014}
+\bibinfo{author}{Nadim, F.}, and \bibinfo{author}{Bucher, D.} (\bibinfo{year}{2014}). \bibinfo{title}{Neuromodulation of synaptic transmission: Scaling strengths and dynamics}.
+\newblock \bibinfo{journal}{Current Opinion in Neurobiology} \emph{\bibinfo{volume}{29}}, \bibinfo{pages}{48--56}.
+%Type = Article
+\bibitem[{Katz et~al.(1994)Katz, Getting and Frost}]{katz1994dynamic}
+\bibinfo{author}{Katz, P.}, \bibinfo{author}{Getting, P.}, and \bibinfo{author}{Frost, W.} (\bibinfo{year}{1994}). \bibinfo{title}{Dynamic neuromodulation of synaptic strength intrinsic to a central pattern generator circuit}.
+\newblock \bibinfo{journal}{Nature} \emph{\bibinfo{volume}{367}}, \bibinfo{pages}{729--731}.
+%Type = Article
+\bibitem[{Sakurai and Katz(2003)}]{sakurai2003spike}
+\bibinfo{author}{Sakurai, A.}, and \bibinfo{author}{Katz, P.} (\bibinfo{year}{2003}). \bibinfo{title}{Spike timing-dependent serotonergic neuromodulation of synaptic strength intrinsic to a central pattern generator circuit}.
+\newblock \bibinfo{journal}{Journal of Neuroscience} \emph{\bibinfo{volume}{23}}, \bibinfo{pages}{10745--10755}.
+%Type = Article
+\bibitem[{Sakurai and Katz(2016)}]{SakuraiKatz2016}
+\bibinfo{author}{Sakurai, A.}, and \bibinfo{author}{Katz, P.} (\bibinfo{year}{2016}). \bibinfo{title}{The central pattern generator underlying swimming in \emph{Dendronotus iris}: A simple half-center network oscillator with a twist}.
+\newblock \bibinfo{journal}{Journal of Neurophysiology} \emph{\bibinfo{volume}{116}}, \bibinfo{pages}{1728--1742}.
+%Type = Article
+\bibitem[{Sakurai and Katz(2019)}]{sakurai2019command}
+\bibinfo{author}{Sakurai, A.}, and \bibinfo{author}{Katz, P.} (\bibinfo{year}{2019}). \bibinfo{title}{Command or obey? homologous neurons differ in hierarchical position for the generation of homologous behaviors}.
+\newblock \bibinfo{journal}{J. Neuroscience} \emph{\bibinfo{volume}{39}}, \bibinfo{pages}{6460--6471}.
+%Type = Article
+\bibitem[{Scully et~al.(2024)Scully, Bourahmah, Bloom and Shilnikov}]{scully2024pairing}
+\bibinfo{author}{Scully, J.}, \bibinfo{author}{Bourahmah, J.}, \bibinfo{author}{Bloom, D.}, and \bibinfo{author}{Shilnikov, A.} (\bibinfo{year}{2024}). \bibinfo{title}{Pairing cellular and synaptic dynamics yields flexible network oscillators}.
+\newblock \bibinfo{journal}{Frontiers in Network Physiology} \emph{\bibinfo{volume}{4}}, \bibinfo{pages}{1397151}.
+%Type = Article
+\bibitem[{Sakurai and Katz(2022)}]{sakurai2022bursting}
+\bibinfo{author}{Sakurai, A.}, and \bibinfo{author}{Katz, P.} (\bibinfo{year}{2022}). \bibinfo{title}{Bursting emerges from the complementary roles of neurons in a four-cell network}.
+\newblock \bibinfo{journal}{Journal of Neurophysiology} \emph{\bibinfo{volume}{127}}, \bibinfo{pages}{1054--1066}.
+%Type = Article
+\bibitem[{Manor et~al.(1997)Manor, Nadim, Abbott and Marder}]{Manor1997}
+\bibinfo{author}{Manor, Y.}, \bibinfo{author}{Nadim, F.}, \bibinfo{author}{Abbott, L.}, and \bibinfo{author}{Marder, E.} (\bibinfo{year}{1997}). \bibinfo{title}{Temporal dynamics of convergent excitation in an oscillatory network}.
+\newblock \bibinfo{journal}{Journal of Neuroscience} \emph{\bibinfo{volume}{17}}, \bibinfo{pages}{9648--9660}.
+%Type = Article
+\bibitem[{Neher and Brose(2018)}]{NeherBrose2018}
+\bibinfo{author}{Neher, E.}, and \bibinfo{author}{Brose, N.} (\bibinfo{year}{2018}). \bibinfo{title}{Dynamically primed synaptic vesicle states: Key to understand synaptic short-term plasticity}.
+\newblock \bibinfo{journal}{Neuron} \emph{\bibinfo{volume}{100}}, \bibinfo{pages}{1283--1291}.
+%Type = Article
+\bibitem[{Newcomb et~al.(2012)Newcomb, Sakurai, Lillvis, Gunaratne and Katz}]{newcomb2012homologues}
+\bibinfo{author}{Newcomb, J.}, \bibinfo{author}{Sakurai, A.}, \bibinfo{author}{Lillvis, J.}, \bibinfo{author}{Gunaratne, C.}, and \bibinfo{author}{Katz, P.} (\bibinfo{year}{2012}). \bibinfo{title}{Homology and homoplasy of swimming behaviors and neural circuits in the {Nudipleura} ({Mollusca}, {Gastropoda}, {Opisthobranchia})}.
+\newblock \bibinfo{journal}{Proceedings of the National Academy of Sciences USA} \emph{\bibinfo{volume}{109}}, \bibinfo{pages}{10669--10676}.
+%Type = Article
+\bibitem[{Plant and Kim(1981)}]{plant81}
+\bibinfo{author}{Plant, R.}, and \bibinfo{author}{Kim, M.} (\bibinfo{year}{1981}). \bibinfo{title}{Bifurcation and resonance in a model for bursting nerve cells}.
+\newblock \bibinfo{journal}{Journal of Mathematical Biology} \emph{\bibinfo{volume}{11}}, \bibinfo{pages}{15--32}.
+%Type = Article
+\bibitem[{Marder and Goaillard(2006)}]{MarderGoaillard2006}
+\bibinfo{author}{Marder, E.}, and \bibinfo{author}{Goaillard, J.} (\bibinfo{year}{2006}). \bibinfo{title}{Variability, compensation and homeostasis in neuron and network function}.
+\newblock \bibinfo{journal}{Nature Reviews Neuroscience} \emph{\bibinfo{volume}{7}}, \bibinfo{pages}{563--574}.
+%Type = Article
+\bibitem[{Prinz et~al.(2004)Prinz, Bucher and Marder}]{Prinz2004}
+\bibinfo{author}{Prinz, A.}, \bibinfo{author}{Bucher, D.}, and \bibinfo{author}{Marder, E.} (\bibinfo{year}{2004}). \bibinfo{title}{Similar network activity from disparate circuit parameters}.
+\newblock \bibinfo{journal}{Nature Neuroscience} \emph{\bibinfo{volume}{7}}, \bibinfo{pages}{1345--1352}.
+%Type = Article
+\bibitem[{Del~Negro et~al.(2018)Del~Negro, Funk and Feldman}]{DelNegro2018}
+\bibinfo{author}{Del~Negro, C.}, \bibinfo{author}{Funk, G.}, and \bibinfo{author}{Feldman, J.} (\bibinfo{year}{2018}). \bibinfo{title}{Breathing matters}.
+\newblock \bibinfo{journal}{Nature Reviews Neuroscience} \emph{\bibinfo{volume}{19}}, \bibinfo{pages}{351--367}.
+%Type = Article
+\bibitem[{Destexhe et~al.(1994)Destexhe, Mainen and Sejnowski}]{destexhe1994synthesis}
+\bibinfo{author}{Destexhe, A.}, \bibinfo{author}{Mainen, Z.}, and \bibinfo{author}{Sejnowski, T.} (\bibinfo{year}{1994}). \bibinfo{title}{Synthesis of models for excitable membranes, synaptic transmission and neuromodulation using a common kinetic formalism}.
+\newblock \bibinfo{journal}{Journal of Computational Neuroscience} \emph{\bibinfo{volume}{1}}, \bibinfo{pages}{195--230}.
+%Type = Incollection
+\bibitem[{Destexhe et~al.(1998)Destexhe, Mainen and Sejnowski}]{destexhe1998kinetic}
+\bibinfo{author}{Destexhe, A.}, \bibinfo{author}{Mainen, Z.}, and \bibinfo{author}{Sejnowski, T.} (\bibinfo{year}{1998}). \bibinfo{title}{Kinetic models of synaptic transmission}.
+\newblock In \bibinfo{editor}{ C.{ }Koch}, and \bibinfo{editor}{ I.{ }Segev}, eds. \bibinfo{booktitle}{Methods in Neuronal Modeling: From Ions to Networks} pp. \bibinfo{pages}{1--25}.. \bibinfo{address}{Cambridge, MA}: \bibinfo{publisher}{MIT Press} \bibinfo{edition}{2nd} ed. pp. \bibinfo{pages}{1--25}.
+%Type = Article
+\bibitem[{Rall(1967)}]{Rall67}
+\bibinfo{author}{Rall, W.} (\bibinfo{year}{1967}). \bibinfo{title}{Distinguishing theoretical synaptic potentials computed for different soma-dendritic distributions of synaptic input}.
+\newblock \bibinfo{journal}{Journal of Neurophysiology} \emph{\bibinfo{volume}{30}}, \bibinfo{pages}{1138--1168}.
+
+\end{thebibliography}

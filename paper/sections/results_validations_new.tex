@@ -1,0 +1,28 @@
+\subsection{Model validation through targeted perturbations}
+
+To validate the model, we reproduced perturbation experiments from the original \textit{Dendronotus iris} studies \cite{SakuraiKatz2016, sakurai2022bursting}.
+Brief hyperpolarizing or depolarizing current pulses delivered during ongoing swim episodes test circuit resilience: a robust network should maintain coordinated output despite perturbations and recover rapidly upon their removal.
+The model reproduces these experimental responses without parameter adjustment, confirming that it captures both the functional dynamics and stability properties of the biological CPG.
+
+Figure~\ref{fig:perturbation_responses} presents six perturbation conditions; across all cases, the circuit recovers coordinated bursting once perturbations are removed, demonstrating that the network operates as a robust attractor.
+
+Depolarizing Si3L produces immediate cessation of network bursting: the contralateral Si3R becomes hyperpolarized through reciprocal inhibition, and Si2L is silenced---losing excitatory drive from Si3R while receiving inhibition from the now-active Si2R.
+Meanwhile, Si2R remains active, driven by the depolarized Si3L.
+This perturbation reveals the asymmetric and distributed nature of control in the circuit.
+Upon pulse termination, the circuit recovers rapidly.
+Depolarizing Si3R similarly disrupts alternation; intermittent isolated spikes can be observed in the electrically coupled Si3L and Si2R neurons during the perturbation, indicating that electrical coupling allows small depolarizing excursions even under strong inhibitory pressure.
+Upon pulse termination, the circuit rapidly recovers to its characteristic antiphase rhythm.
+
+Hyperpolarizing a single Si2 neuron represents a special case: it is the only perturbation that does not completely halt network bursting.
+Activity persists through alternative pathways---the contralateral E/I module maintains rhythmic drive despite suppression of its Si2 partner.
+This response reveals a fundamental architectural principle: the contralateral E/I coupling constitutes the core oscillatory engine of the swim network, with half-center oscillators providing stabilization rather than rhythm generation.
+Bilateral Si2 hyperpolarization permits recovery but with longer restoration time, highlighting the stabilizing role of Si2 reciprocal inhibition.
+During bilateral Si2 suppression, small subthreshold oscillations persist in the inhibited neurons, likely reflecting residual drive through electrical coupling from the active Si3 neurons.
+
+Hyperpolarizing Si3R silences its electrical partner Si2L through gap junction coupling.
+Bilateral Si3 hyperpolarization abolishes network activity entirely: without Si3 excitatory drive, Si2 neurons---configured near the threshold between tonic spiking and quiescence---cannot sustain oscillation.
+Upon release, the CPG rapidly restores its rhythm, confirming that Si3 neurons are necessary to initiate network-level bursting.
+Additional bilateral perturbations further validate the model (Supplementary Materials).
+
+These experiments assumed elevated Si3 excitability to sustain bursting.
+In the biological circuit, this drive originates from Si1 command neurons, whose control over network state we examine next.

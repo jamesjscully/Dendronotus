@@ -1,0 +1,27 @@
+\subsection{Model validation and robustness testing through targeted perturbations}
+
+To validate our computational model and assess network robustness, we reproduced key perturbation experiments from the original \textit{Dendronotus iris} swim CPG studies \cite{SakuraiKatz2016, sakurai2022bursting}.
+Brief hyperpolarizing or depolarizing current pulses delivered to targeted interneurons during ongoing swim episodes test how the circuit responds to transient disruptions and whether it recovers its characteristic oscillatory pattern.
+A robust network should maintain coordinated output despite perturbations and return rapidly to stable operation upon their removal.
+Faithful reproduction of these experimental responses confirms that the model captures both the functional dynamics and the stability properties of the biological CPG.
+
+Figure~\ref{fig:perturbation_responses} presents six perturbation experiments (panels A--F) that reveal distinct aspects of circuit resilience.
+Across all conditions, the circuit recovers coordinated bursting once perturbations are removed, demonstrating that the network operates as a robust attractor.
+
+Panel A shows that depolarizing Si3L produces immediate cessation of network bursting followed by rapid recovery.
+The contralateral Si3R neuron becomes hyperpolarized due to strong reciprocal inhibition, and Si2R is silenced via the E/I inhibitory projection.
+Panel B represents a special case: it is the only perturbation in which network bursting is not completely halted.
+The targeted Si2R neuron is strongly inhibited, yet activity persists through alternative pathways---underscoring that the E/I modules, not individual neurons, constitute the core oscillatory engine.
+
+Panel C shows both Si2 interneurons simultaneously hyperpolarized.
+The circuit recovers, but restoration takes noticeably longer than in unilateral cases, highlighting the supporting role Si2 neurons play in stabilizing the rhythm.
+Panel D applies a depolarizing pulse to Si3R, disrupting alternation; upon pulse termination, the circuit rapidly returns to its characteristic antiphase rhythm.
+
+Panel E shows hyperpolarization of Si3R, which silences its electrical partner Si2L through gap junction coupling.
+Panel F shows bilateral hyperpolarization of both Si3 neurons, which completely abolishes network activity.
+Silencing both Si3 neurons eliminates excitatory drive to the Si2 neurons, which are configured near the threshold between tonic spiking and quiescence.
+Upon removal of the hyperpolarizing pulses, the CPG rapidly restores the control rhythm, demonstrating that Si3 neurons are necessary to initiate network-level bursting.
+Additional symmetric bilateral perturbation experiments further validate the model's dynamics (Supplementary Materials).
+
+These perturbation experiments assumed elevated Si3 excitability to sustain ongoing bursting.
+In the biological circuit, this drive originates from Si1 command neurons, whose control over network state we examine next.
