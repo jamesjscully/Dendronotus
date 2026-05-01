@@ -8,15 +8,18 @@ using OrdinaryDiffEq
 
 include(joinpath(@__DIR__, "publication_plasticity_scan.jl"))
 
+const JACK_FIGS_DIR = normpath(joinpath(@__DIR__, "..", ".."))
+const REPO_ROOT_DIR = normpath(joinpath(JACK_FIGS_DIR, ".."))
+
 const MASTER_PNG = joinpath(OUTPUT_DIR, "neuromod_master_figure.png")
 const MASTER_MODEL_POINTS_CSV = joinpath(OUTPUT_DIR, "neuromod_master_model_points.csv")
 const MASTER_MODEL_TRACES_CSV = joinpath(OUTPUT_DIR, "neuromod_master_model_traces.csv")
 const MASTER_DRIVEN_TRACES_CSV = joinpath(OUTPUT_DIR, "neuromod_master_driven_traces.csv")
-const PAPER_FIG5_JPG = joinpath(dirname(dirname(@__DIR__)), "paper", "fig5.jpg")
-const LEGACY_CIRCUIT_SOURCE = joinpath(dirname(@__DIR__), "s1_Fig2A_drives_cpg_als_circuit.jpg")
+const PAPER_FIG5_JPG = joinpath(REPO_ROOT_DIR, "paper", "fig5.jpg")
+const LEGACY_CIRCUIT_SOURCE = joinpath(JACK_FIGS_DIR, "s1_Fig2A_drives_cpg_als_circuit.jpg")
 const LEGACY_CIRCUIT_CROP = joinpath(OUTPUT_DIR, "legacy_circuit_crop2.jpg")
 
-const AKIRA_DIR = joinpath(dirname(@__DIR__), "akira")
+const AKIRA_DIR = joinpath(JACK_FIGS_DIR, "akira")
 const AKIRA_EXTRACTED = joinpath(AKIRA_DIR, "extracted")
 const BIO_SI1_TXT = joinpath(AKIRA_EXTRACTED, "130618-03 Si1.txt")
 const BIO_SI2_TXT = joinpath(AKIRA_EXTRACTED, "130618-03 Si2.txt")
@@ -1266,16 +1269,25 @@ function build_master_figure(; ensure_cache::Bool = false)
     GLMakie.colgap!(fig.layout, 16)
     GLMakie.resize_to_layout!(fig)
 
-    CairoMakie.save(MASTER_PNG, fig)
-    CairoMakie.save(PAPER_FIG5_JPG, fig)
+    CairoMakie.activate!()
+    CairoMakie.save(MASTER_PNG, fig; backend = CairoMakie)
+    master_png_img = FileIO.load(MASTER_PNG)
+    FileIO.save(PAPER_FIG5_JPG, master_png_img)
     return fig
 end
 
 const MASTER_NOAUTORUN = get(ENV, "NEUROMOD_MASTER_NOAUTORUN", "0") == "1"
 
 function main(args = ARGS)
-    mode = isempty(args) ? "both" : lowercase(args[1])
-    if mode == "prepare"
+    mode = isempty(args) ? "interactive" : lowercase(args[1])
+    if mode == "interactive"
+        prepare_master_figure_data()
+        fig = build_master_figure(; ensure_cache = false)
+        display(fig)
+        println("Interactive master figure ready.")
+        println("Saved $(MASTER_PNG)")
+        return
+    elseif mode == "prepare"
         prepare_master_figure_data()
         println("Prepared master-figure caches:")
         println("  $(PUB_SCAN_RAW_CSV)")
@@ -1285,18 +1297,16 @@ function main(args = ARGS)
         println("  $(MASTER_DRIVEN_TRACES_CSV)")
         return
     elseif mode == "plot"
-        fig = build_master_figure(; ensure_cache = false)
-        isinteractive() && display(fig)
+        build_master_figure(; ensure_cache = false)
         println("Saved $(MASTER_PNG)")
         return
     elseif mode == "both"
         prepare_master_figure_data()
-        fig = build_master_figure(; ensure_cache = false)
-        isinteractive() && display(fig)
+        build_master_figure(; ensure_cache = false)
         println("Saved $(MASTER_PNG)")
         return
     end
-    error("Unknown mode `$(mode)`. Use `prepare`, `plot`, or `both`.")
+    error("Unknown mode `$(mode)`. Use `interactive`, `prepare`, `plot`, or `both`.")
 end
 
 if !MASTER_NOAUTORUN

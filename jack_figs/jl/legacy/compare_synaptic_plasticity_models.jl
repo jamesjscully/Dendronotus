@@ -8,7 +8,7 @@ using Statistics
 gr()
 
 const SCRIPT_DIR = @__DIR__
-const OUTPUT_DIR = joinpath(SCRIPT_DIR, "outputs")
+const OUTPUT_DIR = joinpath(dirname(SCRIPT_DIR), "outputs")
 const RAW_CSV = joinpath(OUTPUT_DIR, "plasticity_comparison_points.csv")
 const SUMMARY_CSV = joinpath(OUTPUT_DIR, "plasticity_comparison_summary.csv")
 const FIGURE_PNG = joinpath(OUTPUT_DIR, "plasticity_comparison_scatter.png")
@@ -70,6 +70,10 @@ struct ModelParams
     Ca_shift3::Float64
     Ca_shift4::Float64
     x_shift::Float64
+    x_shift1::Float64
+    x_shift2::Float64
+    x_shift3::Float64
+    x_shift4::Float64
     Iapp::Float64
     t1_ms::Float64
     t2_ms::Float64
@@ -135,7 +139,7 @@ function default_params()
 
     ModelParams(
         0.000625,
-        0.0001,
+        0.011,
         0.00125,
         0.002,
         alpha1,
@@ -170,6 +174,10 @@ function default_params()
         -25.0,
         -25.0,
         -4.0,
+        -4.0,
+        -4.0,
+        -4.0,
+        -4.0,
         0.1,
         1000.0,
         35000.0,
@@ -188,32 +196,21 @@ end
 
 function mode_params(params::ModelParams, mode::ControlMode)
     if mode == presynaptic
-        alphai = 0.015
-        betai = 0.0005
-        alpha3 = 0.01
-        beta3 = 0.002
-        alpha2 = 0.01
-        beta2 = 0.01
         return updated_params(
             params;
-            presynaptic_base_alpha = 0.011,
-            presynaptic_base_g = 0.001,
-            g0 = 0.001,
-            g14 = 0.005,
-            g23 = 0.005,
-            alphai = alphai,
-            betai = betai,
-            scalei = (alphai - betai) / alphai,
-            alpha3 = alpha3,
-            beta3 = beta3,
-            scale3 = alpha3 / (alpha3 + beta3),
-            g34 = 0.005,
-            g43 = 0.005,
-            alpha2 = alpha2,
-            beta2 = beta2,
-            scale2 = alpha2 / (alpha2 + beta2),
-            g21 = 0.01,
-            g12 = 0.01,
+            presynaptic_base_alpha = params.presynaptic_base_alpha,
+            presynaptic_base_g = params.presynaptic_base_g,
+            g0 = params.g0,
+            alpha3 = params.alpha3,
+            beta3 = params.beta3,
+            scale3 = params.scale3,
+            g34 = params.g34,
+            g43 = params.g43,
+            alpha2 = params.alpha2,
+            beta2 = params.beta2,
+            scale2 = params.scale2,
+            g21 = params.g21,
+            g12 = params.g12,
         )
     end
 
@@ -275,7 +272,7 @@ struct BurstDetection
 end
 
 function make_spike_callback(tracker::SpikeTracker)
-    condition(u, t, integrator) = u[5] - tracker.threshold_mv
+    condition(u, t, integrator) = u[2] - tracker.threshold_mv
 
     function affect!(integrator)
         t_ms = integrator.t
@@ -480,7 +477,7 @@ function network_ode!(du, u, p, t_ms)
             0.03 * Ca1 / (0.5 + Ca1) * (-75.0 - V1) +
             0.003 * (-40.0 - V1) -
             g41_eff * (V1 - 30.0) * s4 -
-            params.g12 * (V1 + 80.0) * s21 / params.scale2 +
+            params.g21 * (V1 + 80.0) * s21 / params.scale2 +
             params.gelec * (V4 - V1)
 
     du[3] = 4.0 * m2^3 * h2 * (30.0 - V2) +
@@ -498,7 +495,7 @@ function network_ode!(du, u, p, t_ms)
             0.03 * Ca3 / (0.5 + Ca3) * (-75.0 - V3) +
             0.003 * (-40.0 - V3) -
             params.g23 * (V3 + 80.0) * s2 / params.scalei -
-            params.g34 * (V3 + 80.0) * s43 / params.scale3 +
+            params.g43 * (V3 + 80.0) * s43 / params.scale3 +
             params.gelec * (V2 - V3) -
             params.g0 * (V3 - 30.0) * s0 / params.scale1
 
@@ -519,10 +516,10 @@ function network_ode!(du, u, p, t_ms)
     du[15] = 0.0003 * (0.0085 * x4 * (140.0 - V4 + params.Ca_shift4) - Ca4)
 
     du[6] = ((1.0 / (exp(0.15 * (-V0 - 50.0 + params.x_shift)) + 1.0)) - x0) / 100.0
-    du[7] = ((1.0 / (exp(0.15 * (-V1 - 50.0 + params.x_shift)) + 1.0)) - x1) / 100.0
-    du[8] = ((1.0 / (exp(0.15 * (-V2 - 50.0 + params.x_shift)) + 1.0)) - x2) / 100.0
-    du[9] = ((1.0 / (exp(0.15 * (-V3 - 50.0 + params.x_shift)) + 1.0)) - x3) / 100.0
-    du[10] = ((1.0 / (exp(0.15 * (-V4 - 50.0 + params.x_shift)) + 1.0)) - x4) / 100.0
+    du[7] = ((1.0 / (exp(0.15 * (-V1 - 50.0 + params.x_shift1)) + 1.0)) - x1) / 100.0
+    du[8] = ((1.0 / (exp(0.15 * (-V2 - 50.0 + params.x_shift2)) + 1.0)) - x2) / 100.0
+    du[9] = ((1.0 / (exp(0.15 * (-V3 - 50.0 + params.x_shift3)) + 1.0)) - x3) / 100.0
+    du[10] = ((1.0 / (exp(0.15 * (-V4 - 50.0 + params.x_shift4)) + 1.0)) - x4) / 100.0
 
     du[16] = ((1.0 - h0) * (0.07 * exp((25.0 - Vs0) / 20.0)) - h0 * (1.0 / (1.0 + exp((55.0 - Vs0) / 10.0)))) / 12.5
     du[17] = ((1.0 - h1) * (0.07 * exp((25.0 - Vs1) / 20.0)) - h1 * (1.0 / (1.0 + exp((55.0 - Vs1) / 10.0)))) / 12.5
@@ -554,7 +551,7 @@ function network_ode!(du, u, p, t_ms)
     return nothing
 end
 
-function run_simulation(params::ModelParams, control_gain::Float64, mode::ControlMode, config::SweepConfig; terminate_on_withdrawal_end::Bool = true)
+function run_simulation(params::ModelParams, control_gain::Float64, mode::ControlMode, config::SweepConfig; terminate_on_withdrawal_end::Bool = true, initial_u0 = nothing)
     sim_params = mode_params(params, mode)
     required_complete_bursts = config.transient_bursts + config.measured_cycles
     tracker = SpikeTracker(Float64[], -Inf, config.spike_refractory_s * 1000.0, config.spike_threshold_mv, required_complete_bursts)
@@ -571,14 +568,15 @@ function run_simulation(params::ModelParams, control_gain::Float64, mode::Contro
         end
     end
     spike_callback = ContinuousCallback(
-        (u, t, integrator) -> u[5] - tracker.threshold_mv,
+        (u, t, integrator) -> u[2] - tracker.threshold_mv,
         spike_affect!;
         affect_neg! = nothing,
         save_positions = (false, false),
     )
     callback = CallbackSet(spike_callback, protocol_callback)
     tspan_ms = (0.0, config.max_time_s * 1000.0)
-    problem = ODEProblem(network_ode!, initial_state(), tspan_ms, ode_params)
+    u0 = isnothing(initial_u0) ? initial_state() : copy(initial_u0)
+    problem = ODEProblem(network_ode!, u0, tspan_ms, ode_params)
     solution = solve(
         problem,
         RK4();

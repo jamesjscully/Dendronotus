@@ -2,7 +2,7 @@ using CSV
 using DataFrames
 using OrdinaryDiffEq
 
-include(joinpath(@__DIR__, "legacy", "compare_synaptic_plasticity_models.jl"))
+include(joinpath(@__DIR__, "calibrated_neuromod.jl"))
 
 const BIO_OUTPUT_DIR = joinpath(@__DIR__, "outputs")
 const AKIRA_DIR = joinpath(dirname(@__DIR__), "akira", "extracted")
@@ -11,38 +11,11 @@ const BIO_SI2_TXT = joinpath(AKIRA_DIR, "130618-03 Si2.txt")
 const BIO_DRIVEN_TRACES_CSV = joinpath(BIO_OUTPUT_DIR, "bio_driven_traces.csv")
 const BIO_DRIVEN_POINTS_CSV = joinpath(BIO_OUTPUT_DIR, "bio_driven_points.csv")
 
-const TRACE_PARAMS = updated_params(
-    default_params();
-    direct_post_base_g = 0.00064,
-)
-
-const PRESYNAPTIC_TRACE_GAIN = 3.5869003160011492
-const POSTSYNAPTIC_TRACE_GAIN = 1.0303030303030303
+const PRESYNAPTIC_TRACE_PARAMS = calibrated_params(presynaptic)
+const POSTSYNAPTIC_TRACE_PARAMS = calibrated_params(postsynaptic)
+const PRESYNAPTIC_TRACE_GAIN = PRESYNAPTIC_ANCHOR_GAIN
+const POSTSYNAPTIC_TRACE_GAIN = POSTSYNAPTIC_ANCHOR_GAIN
 const TRACE_SAVEAT_MS = 10.0
-
-const REPRESENTATIVE_TRACE_U0_PRESYNAPTIC = Float64[
-    -44.0, -43.29865028, -43.29889795, -43.3004827, -43.30074954,
-    0.9, 0.83274431, 0.83273889, 0.83270632, 0.83270047,
-    0.3, 1.12048858, 1.12049914, 1.12043197, 1.12044273,
-    0.0, 0.54849525, 0.54850651, 0.54857397, 0.54858613,
-    0.0, 0.09880536, 0.09880305, 0.09878894, 0.09878646,
-    1.7e-7, 0.0,
-    0.0, 0.00010008, 0.0001, 0.0001, 0.0001,
-    0.0, 0.0, 0.0, 0.0,
-    0.06775411,
-]
-
-const REPRESENTATIVE_TRACE_U0_POSTSYNAPTIC = Float64[
-    -44.0, -69.70334268, -41.27715337, -48.60074388, -70.74760465,
-    0.9, 0.08516567, 0.84524093, 0.80227324, 0.07747315,
-    0.3, 0.78928039, 0.66296361, 0.68454718, 0.72991149,
-    0.0, 0.99310944, 0.37556175, 0.32905197, 0.99397798,
-    0.0, 0.00585579, 0.22486165, 0.32778749, 0.00540264,
-    1.0, 0.0,
-    0.0, 0.00561382, 0.00149859, 0.89754837, 0.13323279,
-    3.493e-5, 0.23438674, 0.34682234, 0.00020042,
-    0.06775411,
-]
 
 function load_two_column_txt(path::AbstractString)
     df = DataFrame(CSV.File(path; delim = '\t', normalizenames = false))
@@ -98,16 +71,16 @@ function publication_driven_network_ode!(du, u, p, t_ms)
     m4 = (0.1 * (50.0 - Vs4) / (exp((50.0 - Vs4) / 10.0) - 1.0)) / ((0.1 * (50.0 - Vs4) / (exp((50.0 - Vs4) / 10.0) - 1.0)) + 4.0 * exp((25.0 - Vs4) / 18.0))
 
     du[1] = 0.0
-    du[2] = 4.0 * m1^3 * h1 * (30.0 - V1) + 0.3 * n1^4 * (-75.0 - V1) + 0.01 * x1 * (30.0 - V1) + 0.03 * Ca1 / (0.5 + Ca1) * (-75.0 - V1) + 0.003 * (-40.0 - V1) - g41_eff * (V1 - 30.0) * s4 - params.g12 * (V1 + 80.0) * s21 / params.scale2 + params.gelec * (V4 - V1)
+    du[2] = 4.0 * m1^3 * h1 * (30.0 - V1) + 0.3 * n1^4 * (-75.0 - V1) + 0.01 * x1 * (30.0 - V1) + 0.03 * Ca1 / (0.5 + Ca1) * (-75.0 - V1) + 0.003 * (-40.0 - V1) - g41_eff * (V1 - 30.0) * s4 - params.g21 * (V1 + 80.0) * s21 / params.scale2 + params.gelec * (V4 - V1)
     du[3] = 4.0 * m2^3 * h2 * (30.0 - V2) + 0.3 * n2^4 * (-75.0 - V2) + 0.01 * x2 * (30.0 - V2) + 0.03 * Ca2 / (0.5 + Ca2) * (-75.0 - V2) + 0.003 * (-40.0 - V2) - g32_eff * (V2 - 30.0) * s3 - params.g12 * (V2 + 80.0) * s12 / params.scale2 + params.gelec * (V3 - V2)
-    du[4] = 4.0 * m3^3 * h3 * (30.0 - V3) + 0.3 * n3^4 * (-75.0 - V3) + 0.01 * x3 * (30.0 - V3) + 0.03 * Ca3 / (0.5 + Ca3) * (-75.0 - V3) + 0.003 * (-40.0 - V3) - params.g23 * (V3 + 80.0) * s2 / params.scalei - params.g34 * (V3 + 80.0) * s43 / params.scale3 + params.gelec * (V2 - V3) - params.g0 * (V3 - 30.0) * s0 / params.scale1
+    du[4] = 4.0 * m3^3 * h3 * (30.0 - V3) + 0.3 * n3^4 * (-75.0 - V3) + 0.01 * x3 * (30.0 - V3) + 0.03 * Ca3 / (0.5 + Ca3) * (-75.0 - V3) + 0.003 * (-40.0 - V3) - params.g23 * (V3 + 80.0) * s2 / params.scalei - params.g43 * (V3 + 80.0) * s43 / params.scale3 + params.gelec * (V2 - V3) - params.g0 * (V3 - 30.0) * s0 / params.scale1
     du[5] = 4.0 * m4^3 * h4 * (30.0 - V4) + 0.3 * n4^4 * (-75.0 - V4) + 0.01 * x4 * (30.0 - V4) + 0.03 * Ca4 / (0.5 + Ca4) * (-75.0 - V4) + 0.003 * (-40.0 - V4) - params.g14 * (V4 + 80.0) * s1 / params.scalei - params.g34 * (V4 + 80.0) * s34 / params.scale3 + params.gelec * (V1 - V4) - params.g0 * (V4 - 30.0) * s0 / params.scale1
 
     du[6] = 0.0
-    du[7] = ((1.0 / (exp(0.15 * (-V1 - 50.0 + params.x_shift)) + 1.0)) - x1) / 100.0
-    du[8] = ((1.0 / (exp(0.15 * (-V2 - 50.0 + params.x_shift)) + 1.0)) - x2) / 100.0
-    du[9] = ((1.0 / (exp(0.15 * (-V3 - 50.0 + params.x_shift)) + 1.0)) - x3) / 100.0
-    du[10] = ((1.0 / (exp(0.15 * (-V4 - 50.0 + params.x_shift)) + 1.0)) - x4) / 100.0
+    du[7] = ((1.0 / (exp(0.15 * (-V1 - 50.0 + params.x_shift1)) + 1.0)) - x1) / 100.0
+    du[8] = ((1.0 / (exp(0.15 * (-V2 - 50.0 + params.x_shift2)) + 1.0)) - x2) / 100.0
+    du[9] = ((1.0 / (exp(0.15 * (-V3 - 50.0 + params.x_shift3)) + 1.0)) - x3) / 100.0
+    du[10] = ((1.0 / (exp(0.15 * (-V4 - 50.0 + params.x_shift4)) + 1.0)) - x4) / 100.0
 
     du[11] = 0.0
     du[12] = 0.0003 * (0.0085 * x1 * (140.0 - V1 + params.Ca_shift1) - Ca1)
@@ -143,17 +116,16 @@ function publication_driven_network_ode!(du, u, p, t_ms)
     return nothing
 end
 
-function representative_trace_initial_state(mode::ControlMode)
-    mode == presynaptic && return copy(REPRESENTATIVE_TRACE_U0_PRESYNAPTIC)
-    mode == postsynaptic && return copy(REPRESENTATIVE_TRACE_U0_POSTSYNAPTIC)
-    error("Unsupported mode $(mode)")
+function representative_trace_initial_state(params::ModelParams, gain::Float64, mode::ControlMode)
+    return settled_initial_state(params, gain, mode)
 end
 
 function simulate_bio_driven_trace(params::ModelParams, gain::Float64, mode::ControlMode, drive_time_s::Vector{Float64}, drive_voltage_mv::Vector{Float64})
     sim_params = mode_params(params, mode)
+    u0 = representative_trace_initial_state(params, gain, mode)
     problem = ODEProblem(
         publication_driven_network_ode!,
-        representative_trace_initial_state(mode),
+        u0,
         (0.0, last(drive_time_s) * 1000.0),
         (params = sim_params, control_gain = gain, mode = mode, drive_t = drive_time_s, drive_v = drive_voltage_mv),
     )
@@ -171,7 +143,8 @@ end
 function threshold_crossing_spikes(time_s::AbstractVector{<:Real}, voltage_mv::AbstractVector{<:Real}; threshold_mv::Float64 = 0.0, refractory_s::Float64 = 0.02)
     spikes = Float64[]
     last_spike = -Inf
-    for i in 2:length(time_s)
+    n = min(length(time_s), length(voltage_mv))
+    for i in 2:n
         v_prev = Float64(voltage_mv[i - 1])
         v_now = Float64(voltage_mv[i])
         t_prev = Float64(time_s[i - 1])
@@ -188,41 +161,52 @@ function threshold_crossing_spikes(time_s::AbstractVector{<:Real}, voltage_mv::A
     return spikes
 end
 
-function detect_bursts_from_voltage(time_s::AbstractVector{<:Real}, voltage_mv::AbstractVector{<:Real}; threshold_mv::Float64 = -40.0, min_down_time_s::Float64 = 1.0)
-    above = Float64.(voltage_mv) .> threshold_mv
-    up_idx = findall(diff(Int.(above)) .== 1) .+ 1
-    down_idx = findall(diff(Int.(above)) .== -1) .+ 1
-    starts = Int[]
-    ends = Int[]
-    for u in up_idx
-        prev_down = filter(d -> d < u, down_idx)
-        if !isempty(prev_down)
-            d = prev_down[end]
-            if Float64(time_s[u]) - Float64(time_s[d]) >= min_down_time_s
-                push!(starts, u)
-                next_down = filter(dn -> dn > u, down_idx)
-                push!(ends, isempty(next_down) ? length(time_s) : next_down[1])
-            end
-        elseif Float64(time_s[u]) >= min_down_time_s
-            push!(starts, u)
-            next_down = filter(dn -> dn > u, down_idx)
-            push!(ends, isempty(next_down) ? length(time_s) : next_down[1])
+function spike_burst_config(; spike_threshold_mv::Float64 = -20.0, spike_refractory_s::Float64 = 0.02, burst_factor::Float64 = 2.0)
+    base = calibrated_scan_config()
+    return SweepConfig(
+        base.max_time_s,
+        base.saveat_ms,
+        spike_threshold_mv,
+        spike_refractory_s,
+        burst_factor,
+        base.onset_timeout_s,
+        base.transient_bursts,
+        base.measured_cycles,
+    )
+end
+
+function nearest_time_indices(time_s::AbstractVector{<:Real}, event_times_s::AbstractVector{<:Real})
+    indices = Int[]
+    isempty(time_s) && return indices
+    for t in Float64.(event_times_s)
+        idx = clamp(searchsortedfirst(time_s, t), 1, length(time_s))
+        if idx > 1 && abs(Float64(time_s[idx - 1]) - t) < abs(Float64(time_s[idx]) - t)
+            idx -= 1
         end
+        push!(indices, idx)
     end
+    return indices
+end
+
+function detect_bursts_from_trace_spikes(time_s::AbstractVector{<:Real}, voltage_mv::AbstractVector{<:Real}; spike_threshold_mv::Float64 = -20.0, spike_refractory_s::Float64 = 0.02, burst_factor::Float64 = 2.0)
+    spike_times = threshold_crossing_spikes(time_s, voltage_mv; threshold_mv = spike_threshold_mv, refractory_s = spike_refractory_s)
+    bursts = detect_bursts_from_spikes(spike_times, spike_burst_config(; spike_threshold_mv = spike_threshold_mv, spike_refractory_s = spike_refractory_s, burst_factor = burst_factor))
+    starts = nearest_time_indices(time_s, complete_burst_start_times(bursts))
+    ends = nearest_time_indices(time_s, complete_burst_end_times(bursts))
     return starts, ends
 end
 
-function matched_si1_vs_si2_points(trace::DataFrame)
+function matched_si1_vs_si2_points(trace::DataFrame; spike_threshold_mv::Float64 = -20.0, spike_refractory_s::Float64 = 0.02, burst_factor::Float64 = 2.0)
     time_s = trace[!, :time_s]
     v0 = trace[!, :V0]
     v1 = trace[!, :V1]
-    burst_starts, _ = detect_bursts_from_voltage(time_s, v1; threshold_mv = -40.0, min_down_time_s = 1.0)
+    burst_starts, _ = detect_bursts_from_trace_spikes(time_s, v1; spike_threshold_mv = spike_threshold_mv, spike_refractory_s = spike_refractory_s, burst_factor = burst_factor)
     burst_times = time_s[burst_starts]
     if length(burst_times) < 2
         return DataFrame(mode = String[], si1_frequency_hz = Float64[], burst_frequency_hz = Float64[])
     end
 
-    spike_times = threshold_crossing_spikes(time_s, v0; threshold_mv = -20.0, refractory_s = 0.05)
+    spike_times = threshold_crossing_spikes(time_s, v0; threshold_mv = spike_threshold_mv, refractory_s = spike_refractory_s)
     if length(spike_times) < 2
         return DataFrame(mode = String[], si1_frequency_hz = Float64[], burst_frequency_hz = Float64[])
     end
@@ -248,18 +232,21 @@ function main()
     bio_t1, bio_v1 = load_two_column_txt(BIO_SI1_TXT)
     bio_t1 .-= first(bio_t1)
     traces = vcat(
-        simulate_bio_driven_trace(TRACE_PARAMS, PRESYNAPTIC_TRACE_GAIN, presynaptic, bio_t1, bio_v1),
-        simulate_bio_driven_trace(TRACE_PARAMS, POSTSYNAPTIC_TRACE_GAIN, postsynaptic, bio_t1, bio_v1),
+        simulate_bio_driven_trace(PRESYNAPTIC_TRACE_PARAMS, PRESYNAPTIC_TRACE_GAIN, presynaptic, bio_t1, bio_v1),
+        simulate_bio_driven_trace(POSTSYNAPTIC_TRACE_PARAMS, POSTSYNAPTIC_TRACE_GAIN, postsynaptic, bio_t1, bio_v1),
     )
     points = vcat(
         matched_si1_vs_si2_points(traces[traces.mode .== "presynaptic", :]),
         matched_si1_vs_si2_points(traces[traces.mode .== "postsynaptic", :]),
     )
     mkpath(BIO_OUTPUT_DIR)
+    write_calibration_provenance()
     CSV.write(BIO_DRIVEN_TRACES_CSV, traces)
     CSV.write(BIO_DRIVEN_POINTS_CSV, points)
     println("Saved $(BIO_DRIVEN_TRACES_CSV)")
     println("Saved $(BIO_DRIVEN_POINTS_CSV)")
 end
 
-main()
+if abspath(PROGRAM_FILE) == @__FILE__
+    main()
+end

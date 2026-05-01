@@ -1,0 +1,11 @@
+key,value,note
+cited_excitatory_alpha,0.05,target excitatory synaptic alpha used elsewhere in this model family
+presynaptic_base_alpha,0.011,presynaptic-mode unmodulated excitatory alpha
+presynaptic_anchor_gain,3.545454545454546,CITED_EXCITATORY_ALPHA / PRESYNAPTIC_BASE_ALPHA - 1
+cited_excitatory_g,0.002,target effective excitatory conductance for common trace after suppressing no-input bursting
+postsynaptic_anchor_gain,3.0,postsynaptic common-trace gain
+saturated_mod_level_assumption,1.0,sm / scale_sm is approximately 1 under sustained strong drive
+compensated_direct_post_base_g,0.0005,CITED_EXCITATORY_G / (1 + POSTSYNAPTIC_ANCHOR_GAIN * SATURATED_MOD_LEVEL)
+calibrated_x_shift,-6.35,nearby excitability shift that suppresses no-input Si2 bursting in preliminary trace probes
+presynaptic_si1_excitatory_g,0.0005,Si1 excitatory drive conductance chosen from preliminary presynaptic V1 scan probes after base network is quiet
+postsynaptic_si1_excitatory_g,0.002,Si1 excitatory drive conductance kept at the cited conductance; gain 0 remains quiet in postsynaptic scan probes
