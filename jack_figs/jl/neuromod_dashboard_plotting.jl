@@ -57,17 +57,26 @@ const DASHBOARD_PARAM_KEYS = [
     :postsyn_g0,
     :alpha1,
     :beta1,
+    :s0_floor,
     :alpham,
     :betam,
+    :sm_floor,
     :ca_shift_si2,
     :ca_shift_si3,
     :presynaptic_base_g,
     :direct_post_base_g,
     :presyn_alphax,
     :postsyn_alphax,
+    :presyn_betax,
+    :postsyn_betax,
+    :si3_exc_floor,
+    :slow_inhib_g,
+    :slow_inhib_alpha,
+    :slow_inhib_beta,
     :si2_mutual_inhib_g,
     :si2_mutual_inhib_alpha,
     :si2_mutual_inhib_beta,
+    :si_inhib_floor,
     :si3_mutual_inhib_g,
     :si3_mutual_inhib_alpha,
     :si3_mutual_inhib_beta,
@@ -82,17 +91,26 @@ function built_in_param_defaults()
         POSTSYNAPTIC_SI1_EXCITATORY_G,
         default_params().alpha1,
         default_params().beta1,
+        default_params().s0_floor,
         default_params().alpham,
         default_params().betam,
+        default_params().sm_floor,
         0.0,
         0.0,
         default_params().presynaptic_base_g,
         COMPENSATED_DIRECT_POST_BASE_G,
         PRESYNAPTIC_BASE_ALPHA,
         CITED_EXCITATORY_ALPHA,
+        default_params().betax,
+        default_params().betax,
+        default_params().si3_exc_floor,
+        default_params().g14,
+        default_params().alphai,
+        default_params().betai,
         default_params().g12,
         default_params().alpha2,
         default_params().beta2,
+        default_params().si_inhib_floor,
         default_params().g34,
         default_params().alpha3,
         default_params().beta3,
@@ -125,6 +143,17 @@ function trace_offsets()
         "postsynaptic" => -25.0,
         "postsynaptic_si3" => -100.0,
     )
+end
+
+shared_neuromod_offset(offsets) = offsets["si2"] - 58.0
+
+function neuromod_trace_vectors(time_s, sm, base_offset::Float64)
+    t, y = matched_trace_vectors(time_s, sm, 0.0)
+    keep = isfinite.(y)
+    if isempty(y) || !any(keep)
+        return Float64[], Float64[]
+    end
+    return t[keep], base_offset .+ 34.0 .* clamp.(y[keep], 0.0, 1.5)
 end
 
 function add_panel_label!(ax::Axis, label::String)
@@ -209,9 +238,9 @@ function refresh_model_point_observables!(model_points_obs, point_obs)
     end
 end
 
-function plot_compare_panel!(ax::Axis, model_points::DataFrame; detector = (spike_threshold_mv = -20.0, spike_refractory_s = 0.02, burst_factor = 3.0))
-    lit_x, lit_y = load_biological_fig2c()
-    bio_points = load_biological_trace_points(; detector_kwargs(detector)...)
+function plot_compare_panel!(ax::Axis, model_points::DataFrame; detector = (spike_threshold_mv = -20.0, spike_refractory_s = 0.02, burst_factor = 3.0), time_scale::Float64 = REPRESENTATIVE_BIOLOGY_TIME_SCALE)
+    lit_x, lit_y = load_biological_fig2c(; time_scale = time_scale)
+    bio_points = load_biological_trace_points(; time_scale = time_scale, detector_kwargs(detector)...)
     bio_x, bio_y = finite_cols(bio_points, :si1_frequency_hz, :burst_frequency_hz)
     scatter!(ax, lit_x, lit_y; color = LITERATURE_GREY, marker = :circle, markersize = 10, strokecolor = :black, strokewidth = 0.8)
     scatter!(ax, bio_x, bio_y; color = :black, marker = :utriangle, markersize = 10, strokecolor = :white, strokewidth = 0.8)
@@ -312,6 +341,17 @@ function trace_panel_limits(bio_t1, bio_v1, bio_t2, bio_v2, traces::Dict{String,
             end
         end
     end
+    sm_trace = get(traces, "presynaptic", DataFrame())
+    if isempty(sm_trace) || !(:sm in propertynames(sm_trace)) || !any(isfinite, sm_trace.sm)
+        sm_trace = get(traces, "postsynaptic", DataFrame())
+    end
+    if !isempty(sm_trace) && :sm in propertynames(sm_trace)
+        _, sm_vals = neuromod_trace_vectors(sm_trace.time_s, sm_trace.sm, shared_neuromod_offset(offsets))
+        if !isempty(sm_vals)
+            push!(ymins, minimum(sm_vals))
+            push!(ymaxs, maximum(sm_vals))
+        end
+    end
     return minimum(xs), maximum(xs), minimum(ymins) - 12.0, maximum(ymaxs) + 60.0
 end
 
@@ -329,11 +369,13 @@ function set_model_trace_observables!(trace_obs, traces::Dict{String, DataFrame}
             trace_obs[(mode_name, :V0)][] = Float64[]
             trace_obs[(mode_name, :V1)][] = Float64[]
             trace_obs[(mode_name, :V3)][] = Float64[]
+            trace_obs[(mode_name, :sm)][] = Float64[]
         else
             trace_obs[(mode_name, :time)][] = Float64.(tr.time_s)
             trace_obs[(mode_name, :V0)][] = Float64.(tr.V0)
             trace_obs[(mode_name, :V1)][] = Float64.(tr.V1)
             trace_obs[(mode_name, :V3)][] = :V3 in propertynames(tr) ? Float64.(tr.V3) : fill(NaN, nrow(tr))
+            trace_obs[(mode_name, :sm)][] = :sm in propertynames(tr) ? Float64.(tr.sm) : fill(NaN, nrow(tr))
         end
     end
 end
@@ -428,6 +470,11 @@ function plot_representative_traces!(ax::Axis, bio_t1, bio_v1, bio_t2, bio_v2, t
             show_burst_markers && plot_burst_markers!(ax, tr.time_s, tr.V3, offsets["$(mode_name)_si3"]; color = DASH_COLORS[mode_name], marker = DASH_MARKERS[mode_name], detector = detector)
         end
     end
+    sm_trace = !isempty(traces["presynaptic"]) ? traces["presynaptic"] : traces["postsynaptic"]
+    if !isempty(sm_trace) && :sm in propertynames(sm_trace)
+        sm_x, sm_y = neuromod_trace_vectors(sm_trace.time_s, sm_trace.sm, shared_neuromod_offset(offsets))
+        lines!(ax, sm_x, sm_y; color = RGBf(0.45, 0.24, 0.62), linewidth = 1.1)
+    end
     x_min, x_max, y_min, y_max = trace_panel_limits(bio_t1, bio_v1, bio_t2, bio_v2, traces; source = source, show_si3 = show_si3)
     label_x = x_min + 0.045 * (x_max - x_min)
     if source == :scan_protocol
@@ -441,6 +488,7 @@ function plot_representative_traces!(ax::Axis, bio_t1, bio_v1, bio_t2, bio_v2, t
         text!(ax, label_x, offsets["presynaptic_si3"] + 38; text = "Si3 presynaptic", align = (:left, :center), fontsize = 15, color = DASH_COLORS["presynaptic"])
     end
     text!(ax, label_x, offsets["postsynaptic"] + 38; text = "Si2 postsynaptic", align = (:left, :center), fontsize = 15, color = DASH_COLORS["postsynaptic"])
+    text!(ax, label_x, shared_neuromod_offset(offsets) + 22; text = "sm neuromodulation", align = (:left, :center), fontsize = 12, color = RGBf(0.45, 0.24, 0.62))
     if show_si3
         text!(ax, label_x, offsets["postsynaptic_si3"] + 38; text = "Si3 postsynaptic", align = (:left, :center), fontsize = 15, color = DASH_COLORS["postsynaptic"])
     end
@@ -458,8 +506,8 @@ function plot_representative_traces!(ax::Axis, bio_t1, bio_v1, bio_t2, bio_v2, t
     add_l_scale_bar!(ax, x_min, x_max, y_min, y_max)
 end
 
-function build_clean_figure(summary::DataFrame, raw::DataFrame, traces::Dict{String, DataFrame}; trace_source::Symbol = :representative, show_si3::Bool = false, show_burst_markers::Bool = true, detector = (spike_threshold_mv = -20.0, spike_refractory_s = 0.02, burst_factor = 3.0))
-    bio_t1, bio_v1, bio_t2, bio_v2 = load_biology_pair()
+function build_clean_figure(summary::DataFrame, raw::DataFrame, traces::Dict{String, DataFrame}; trace_source::Symbol = :representative, show_si3::Bool = false, show_burst_markers::Bool = true, detector = (spike_threshold_mv = -20.0, spike_refractory_s = 0.02, burst_factor = 3.0), time_scale::Float64 = REPRESENTATIVE_BIOLOGY_TIME_SCALE)
+    bio_t1, bio_v1, bio_t2, bio_v2 = load_biology_pair(; time_scale = time_scale)
     fig = Figure(size = (1180, 1320), backgroundcolor = :white, fontsize = 18)
     axA = Axis(fig[1, 1], backgroundcolor = RGBf(0.98, 0.98, 0.99))
     axB = Axis(fig[1, 2], backgroundcolor = RGBf(0.98, 0.98, 0.99))
@@ -467,7 +515,7 @@ function build_clean_figure(summary::DataFrame, raw::DataFrame, traces::Dict{Str
     axD = Axis(fig[2, 2], backgroundcolor = RGBf(0.98, 0.98, 0.99))
     axE = Axis(fig[3, 1:2], backgroundcolor = RGBf(0.98, 0.98, 0.99))
     plot_circuit_panel!(axA)
-    plot_compare_panel!(axB, representative_model_points(traces; detector_kwargs(detector)...); detector = detector)
+    plot_compare_panel!(axB, representative_model_points(traces; detector_kwargs(detector)...); detector = detector, time_scale = time_scale)
     plot_gain_panel!(axC, summary, raw, "pre")
     plot_gain_panel!(axD, summary, raw, "post")
     plot_representative_traces!(axE, bio_t1, bio_v1, bio_t2, bio_v2, traces; source = trace_source, show_si3 = show_si3, show_burst_markers = show_burst_markers, detector = detector)
@@ -489,9 +537,11 @@ function build_dashboard()
     summary_obs = Observable(load_dashboard_summary())
     selected_obs = Observable(("presynaptic", PRESYNAPTIC_ANCHOR_GAIN))
     traces_obs = Observable(load_representative_traces())
+    full_initial_state = Ref{Union{Nothing, Vector{Float64}}}(nothing)
     detector_obs = Observable((spike_threshold_mv = -20.0, spike_refractory_s = 0.02, burst_factor = 3.0))
+    trace_time_scale_obs = Observable(REPRESENTATIVE_BIOLOGY_TIME_SCALE)
     model_points_obs = Observable(representative_model_points(traces_obs[]; detector_kwargs(detector_obs[])...))
-    bio_points_obs = Observable(load_biological_trace_points(; detector_kwargs(detector_obs[])...))
+    bio_points_obs = Observable(load_biological_trace_points(; time_scale = trace_time_scale_obs[], detector_kwargs(detector_obs[])...))
     status_obs = Observable("Ready")
 
     plot_obs = Dict{Tuple{String, Symbol}, Observable{Vector{Float64}}}()
@@ -512,12 +562,18 @@ function build_dashboard()
         trace_obs[(mode_name, :V0)] = Observable(Float64[])
         trace_obs[(mode_name, :V1)] = Observable(Float64[])
         trace_obs[(mode_name, :V3)] = Observable(Float64[])
+        trace_obs[(mode_name, :sm)] = Observable(Float64[])
     end
     set_model_trace_observables!(trace_obs, traces_obs[])
-    bio_t1, bio_v1, bio_t2, bio_v2 = load_biology_pair()
-    drive_t1, drive_v1, _, _ = load_biology_pair(; time_scale = 1.0)
-
-    fig = Figure(size = (1980, 1100), backgroundcolor = :white, fontsize = 15)
+    bio_t1, bio_v1, bio_t2, bio_v2 = load_biology_pair(; time_scale = trace_time_scale_obs[])
+    bio_t1_obs = Observable(bio_t1)
+    bio_v1_obs = Observable(bio_v1)
+    bio_t2_obs = Observable(bio_t2)
+    bio_v2_obs = Observable(bio_v2)
+    lit_x, lit_y = load_biological_fig2c(; time_scale = trace_time_scale_obs[])
+    lit_x_obs = Observable(lit_x)
+    lit_y_obs = Observable(lit_y)
+    fig = Figure(size = (1980, 1380), backgroundcolor = :white, fontsize = 15)
     controls = GridLayout(fig[1:2, 1], tellwidth = true)
     parameter_controls = GridLayout(fig[1:2, 2], tellwidth = true)
     plots = GridLayout(fig[1:2, 3:4])
@@ -542,8 +598,12 @@ function build_dashboard()
     cb_trace_scan_protocol = add_labeled_checkbox!(controls, 9, "use scan burst protocol"; checked = false)
     cb_show_si3 = add_labeled_checkbox!(controls, 10, "show Si3 traces"; checked = true)
     cb_show_burst_markers = add_labeled_checkbox!(controls, 11, "show burst onsets"; checked = true)
-    sg_trace = SliderGrid(
+    sg_timescale = SliderGrid(
         controls[12, 1:2],
+        (label = "time scale", range = 1.0:0.25:10.0, startvalue = trace_time_scale_obs[], format = x -> string(round(Float64(x), digits = 2), "x")),
+    )
+    sg_trace = SliderGrid(
+        controls[13, 1:2],
         (label = "presyn gain", range = 0.0:0.05:10.0, startvalue = PRESYNAPTIC_ANCHOR_GAIN, format = "{:.2f}"),
         (label = "postsyn gain", range = 0.0:0.05:10.0, startvalue = POSTSYNAPTIC_ANCHOR_GAIN, format = "{:.2f}"),
         (label = "Ca0 IC", range = 0.0:0.05:2.0, startvalue = initial_state()[11], format = "{:.2f}"),
@@ -556,9 +616,10 @@ function build_dashboard()
         (label = "burst factor", range = 1.1:0.1:5.0, startvalue = detector_obs[].burst_factor, format = "{:.1f}"),
     )
 
-    save_button = Button(controls[13, 1]; label = "Save Clean PNG", width = 140)
-    write_csv_button = Button(controls[13, 2]; label = "Write CSVs", width = 120)
-    Label(controls[14, 1:2], status_obs; halign = :left, tellwidth = false)
+    terminal_ic_button = Button(controls[14, 1:2]; label = "Set ICs to Terminal State", width = 220)
+    save_button = Button(controls[15, 1]; label = "Save Clean PNG", width = 140)
+    write_csv_button = Button(controls[15, 2]; label = "Write CSVs", width = 120)
+    Label(controls[16, 1:2], status_obs; halign = :left, tellwidth = false)
 
     Label(parameter_controls[1, 1:2], "Parameters"; fontsize = 20, font = :bold, halign = :left)
     param_defaults = load_param_defaults()
@@ -566,31 +627,41 @@ function build_dashboard()
     param_specs = Dict{Symbol, Any}(
         :x_shift_si2 => (label = "x_shift1/2", range = -8.0:0.05:-4.0, startvalue = param_defaults_by_key[:x_shift_si2], format = "{:.2f}"),
         :x_shift_si3 => (label = "x_shift3/4", range = -8.0:0.05:-4.0, startvalue = param_defaults_by_key[:x_shift_si3], format = "{:.2f}"),
-        :presyn_g0 => (label = "g0 presyn", range = 0.0001:0.0001:0.0100, startvalue = param_defaults_by_key[:presyn_g0], format = "{:.4f}"),
-        :postsyn_g0 => (label = "g0 postsyn", range = 0.0001:0.0001:0.0100, startvalue = param_defaults_by_key[:postsyn_g0], format = "{:.4f}"),
+        :presyn_g0 => (label = "g0 presyn", range = 0.0:0.0001:0.0100, startvalue = param_defaults_by_key[:presyn_g0], format = "{:.4f}"),
+        :postsyn_g0 => (label = "g0 postsyn", range = 0.0:0.0001:0.0100, startvalue = param_defaults_by_key[:postsyn_g0], format = "{:.4f}"),
         :alpha1 => (label = "alpha1", range = 0.001:0.001:0.050, startvalue = param_defaults_by_key[:alpha1], format = "{:.3f}"),
         :beta1 => (label = "beta1", range = 0.0001:0.0001:0.0100, startvalue = param_defaults_by_key[:beta1], format = "{:.4f}"),
-        :alpham => (label = "alpham", range = 0.0005:0.0005:0.0200, startvalue = param_defaults_by_key[:alpham], format = "{:.4f}"),
+        :s0_floor => (label = "s0 floor", range = 0.01:0.0025:0.5000, startvalue = param_defaults_by_key[:s0_floor], format = "{:.4f}"),
+        :alpham => (label = "alpham", range = 0.0005:0.0005:0.1000, startvalue = param_defaults_by_key[:alpham], format = "{:.4f}"),
         :betam => (label = "betam", range = 0.00005:0.00005:0.00200, startvalue = param_defaults_by_key[:betam], format = "{:.5f}"),
+        :sm_floor => (label = "sm floor", range = 0.01:0.0025:0.5000, startvalue = param_defaults_by_key[:sm_floor], format = "{:.4f}"),
         :ca_shift_si2 => (label = "Ca_shift1/2", range = -120.0:1.0:20.0, startvalue = param_defaults_by_key[:ca_shift_si2], format = "{:.0f}"),
         :ca_shift_si3 => (label = "Ca_shift3/4", range = -120.0:1.0:20.0, startvalue = param_defaults_by_key[:ca_shift_si3], format = "{:.0f}"),
-        :presynaptic_base_g => (label = "presyn g41/g32 base", range = 0.0001:0.0001:0.0030, startvalue = param_defaults_by_key[:presynaptic_base_g], format = "{:.4f}"),
-        :direct_post_base_g => (label = "postsyn g41/g32 base", range = 0.0001:0.0001:0.0030, startvalue = param_defaults_by_key[:direct_post_base_g], format = "{:.4f}"),
+        :presynaptic_base_g => (label = "presyn g41/g32 base", range = 0.0:0.0001:0.0100, startvalue = param_defaults_by_key[:presynaptic_base_g], format = "{:.4f}"),
+        :direct_post_base_g => (label = "postsyn g41/g32 base", range = 0.0:0.0001:0.0100, startvalue = param_defaults_by_key[:direct_post_base_g], format = "{:.4f}"),
         :presyn_alphax => (label = "presyn alphax", range = 0.001:0.001:0.050, startvalue = param_defaults_by_key[:presyn_alphax], format = "{:.3f}"),
-        :postsyn_alphax => (label = "postsyn alphax", range = 0.005:0.005:0.100, startvalue = param_defaults_by_key[:postsyn_alphax], format = "{:.3f}"),
-        :si2_mutual_inhib_g => (label = "Si2 mutual inhib g", range = 0.0001:0.0001:0.0300, startvalue = param_defaults_by_key[:si2_mutual_inhib_g], format = "{:.4f}"),
+        :postsyn_alphax => (label = "postsyn alphax", range = 0.001:0.001:0.100, startvalue = param_defaults_by_key[:postsyn_alphax], format = "{:.3f}"),
+        :presyn_betax => (label = "presyn betax", range = 0.0001:0.0001:0.0100, startvalue = param_defaults_by_key[:presyn_betax], format = "{:.4f}"),
+        :postsyn_betax => (label = "postsyn betax", range = 0.0001:0.0001:0.0100, startvalue = param_defaults_by_key[:postsyn_betax], format = "{:.4f}"),
+        :si3_exc_floor => (label = "s3/s4 floor", range = 0.01:0.0025:0.5000, startvalue = param_defaults_by_key[:si3_exc_floor], format = "{:.4f}"),
+        :slow_inhib_g => (label = "g14/g23 slow inhib", range = 0.0:0.0001:0.0300, startvalue = param_defaults_by_key[:slow_inhib_g], format = "{:.4f}"),
+        :slow_inhib_alpha => (label = "alphai", range = 0.001:0.001:0.050, startvalue = param_defaults_by_key[:slow_inhib_alpha], format = "{:.3f}"),
+        :slow_inhib_beta => (label = "betai", range = 0.0001:0.0001:0.0200, startvalue = param_defaults_by_key[:slow_inhib_beta], format = "{:.4f}"),
+        :si2_mutual_inhib_g => (label = "Si2 mutual inhib g", range = 0.0:0.0001:0.0300, startvalue = param_defaults_by_key[:si2_mutual_inhib_g], format = "{:.4f}"),
         :si2_mutual_inhib_alpha => (label = "Si2 mutual inhib alpha", range = 0.001:0.001:0.050, startvalue = param_defaults_by_key[:si2_mutual_inhib_alpha], format = "{:.3f}"),
         :si2_mutual_inhib_beta => (label = "Si2 mutual inhib beta", range = 0.0001:0.0001:0.0200, startvalue = param_defaults_by_key[:si2_mutual_inhib_beta], format = "{:.4f}"),
-        :si3_mutual_inhib_g => (label = "Si3 mutual inhib g", range = 0.0001:0.0001:0.0300, startvalue = param_defaults_by_key[:si3_mutual_inhib_g], format = "{:.4f}"),
+        :si_inhib_floor => (label = "s1/s2 floor", range = 0.01:0.0025:0.5000, startvalue = param_defaults_by_key[:si_inhib_floor], format = "{:.4f}"),
+        :si3_mutual_inhib_g => (label = "Si3 mutual inhib g", range = 0.0:0.0001:0.0300, startvalue = param_defaults_by_key[:si3_mutual_inhib_g], format = "{:.4f}"),
         :si3_mutual_inhib_alpha => (label = "Si3 mutual inhib alpha", range = 0.001:0.001:0.050, startvalue = param_defaults_by_key[:si3_mutual_inhib_alpha], format = "{:.3f}"),
         :si3_mutual_inhib_beta => (label = "Si3 mutual inhib beta", range = 0.0001:0.0001:0.0200, startvalue = param_defaults_by_key[:si3_mutual_inhib_beta], format = "{:.4f}"),
         :t1_ms => (label = "t1", range = 1000.0:1000.0:100000.0, startvalue = param_defaults_by_key[:t1_ms], format = "{:.0f}"),
     )
     param_sections = [
         ("Voltage/Ca Shifts", [:x_shift_si2, :x_shift_si3, :ca_shift_si2, :ca_shift_si3]),
-        ("Si1 Excitation", [:presyn_g0, :postsyn_g0, :alpha1, :beta1]),
-        ("Modulation/Timing", [:alpham, :betam, :t1_ms]),
-        ("Excitatory Coupling", [:presynaptic_base_g, :direct_post_base_g, :presyn_alphax, :postsyn_alphax]),
+        ("Si1 Excitation", [:presyn_g0, :postsyn_g0, :alpha1, :beta1, :s0_floor]),
+        ("Modulation/Timing", [:alpham, :betam, :sm_floor, :t1_ms]),
+        ("Excitatory Coupling", [:presynaptic_base_g, :direct_post_base_g, :presyn_alphax, :postsyn_alphax, :presyn_betax, :postsyn_betax, :si3_exc_floor]),
+        ("Slow Inhibition", [:slow_inhib_g, :slow_inhib_alpha, :slow_inhib_beta, :si_inhib_floor]),
         ("Mutual Inhibition", [:si2_mutual_inhib_g, :si2_mutual_inhib_alpha, :si2_mutual_inhib_beta, :si3_mutual_inhib_g, :si3_mutual_inhib_alpha, :si3_mutual_inhib_beta]),
     ]
     param_grids = Any[]
@@ -607,16 +678,22 @@ function build_dashboard()
     end
     sg_params = (sliders = reduce(vcat, [collect(grid.sliders) for grid in param_grids]), grids = param_grids, by_key = param_slider_by_key)
 
+    active_param_text = Observable("Active parameters pending")
+    Label(parameter_controls[row, 1:2], active_param_text; fontsize = 11, halign = :left, tellwidth = false)
+    row += 1
+
+    match_baselines_button = Button(parameter_controls[row, 1:2]; label = "Match Post Baseline to Pre", width = 290)
+    row += 1
+
     reset_params_button = Button(parameter_controls[row, 1]; label = "Reset Params", width = 140)
     save_params_button = Button(parameter_controls[row, 2]; label = "Save Params", width = 140)
 
     axA = Axis(plots[1, 1], backgroundcolor = RGBf(0.98, 0.98, 0.99))
     plot_circuit_panel!(axA)
     axB = Axis(plots[1, 2], title = "Si1 Rate vs Burst Rate", xlabel = "Si1 spike freq (Hz)", ylabel = "Burst freq (Hz)", backgroundcolor = RGBf(0.98, 0.98, 0.99))
-    lit_x, lit_y = load_biological_fig2c()
     bio_x = lift(points -> finite_cols(points, :si1_frequency_hz, :burst_frequency_hz)[1], bio_points_obs)
     bio_y = lift(points -> finite_cols(points, :si1_frequency_hz, :burst_frequency_hz)[2], bio_points_obs)
-    scatter!(axB, lit_x, lit_y; color = LITERATURE_GREY, marker = :circle, markersize = 10, strokecolor = :black, strokewidth = 0.8)
+    scatter!(axB, safe_x(lit_x_obs, lit_y_obs), safe_y(lit_x_obs, lit_y_obs); color = LITERATURE_GREY, marker = :circle, markersize = 10, strokecolor = :black, strokewidth = 0.8)
     scatter!(axB, safe_x(bio_x, bio_y), safe_y(bio_x, bio_y); color = :black, marker = :utriangle, markersize = 10, strokecolor = :white, strokewidth = 0.8)
     trend_y_observables = Observable{Vector{Float64}}[]
     for mode_name in MODE_LABELS
@@ -625,8 +702,7 @@ function build_dashboard()
         scatter!(axB, safe_x(point_obs[(mode_name, :x)], point_obs[(mode_name, :y)]), safe_y(point_obs[(mode_name, :x)], point_obs[(mode_name, :y)]);
             color = (DASH_COLORS[mode_name], 0.84), marker = DASH_MARKERS[mode_name], markersize = 10, strokecolor = :black, strokewidth = 0.8)
     end
-    lit_trend_x, lit_trend_y = trend_line_vectors(lit_x, lit_y)
-    lines!(axB, lit_trend_x, lit_trend_y; color = LITERATURE_GREY, linewidth = 3.0)
+    lines!(axB, trend_x_obs(lit_x_obs, lit_y_obs), trend_y_obs(lit_x_obs, lit_y_obs); color = LITERATURE_GREY, linewidth = 3.0)
     bio_trend_x = trend_x_obs(bio_x, bio_y)
     bio_trend_y = trend_y_obs(bio_x, bio_y)
     lines!(axB, bio_trend_x, bio_trend_y; color = :black, linewidth = 4.0)
@@ -681,12 +757,14 @@ function build_dashboard()
     scan_protocol_visible = cb_trace_scan_protocol.checked
     empirical_protocol_visible = lift(x -> !x, scan_protocol_visible)
     empirical_burst_markers_visible = lift((empirical, show_markers) -> empirical && show_markers, empirical_protocol_visible, cb_show_burst_markers.checked)
-    lines!(axE, bio_t1, Float64.(bio_v1) .+ offsets["si1"]; color = RGBf(0.35, 0.35, 0.35), linewidth = 1.4, visible = empirical_protocol_visible)
-    lines!(axE, bio_t2, Float64.(bio_v2) .+ offsets["si2"]; color = RGBf(0.1, 0.1, 0.1), linewidth = 1.4, visible = empirical_protocol_visible)
-    bio_tick_x = lift(d -> burst_tick_vectors(bio_t2, bio_v2, offsets["si2"]; detector_kwargs(d)...)[1], detector_obs)
-    bio_tick_y = lift(d -> burst_tick_vectors(bio_t2, bio_v2, offsets["si2"]; detector_kwargs(d)...)[2], detector_obs)
-    bio_marker_x = lift(d -> burst_marker_vectors(bio_t2, bio_v2, offsets["si2"]; detector_kwargs(d)...)[1], detector_obs)
-    bio_marker_y = lift(d -> burst_marker_vectors(bio_t2, bio_v2, offsets["si2"]; detector_kwargs(d)...)[2], detector_obs)
+    bio_si1_y = lift(v -> Float64.(v) .+ offsets["si1"], bio_v1_obs)
+    bio_si2_y = lift(v -> Float64.(v) .+ offsets["si2"], bio_v2_obs)
+    lines!(axE, bio_t1_obs, bio_si1_y; color = RGBf(0.35, 0.35, 0.35), linewidth = 1.4, visible = empirical_protocol_visible)
+    lines!(axE, bio_t2_obs, bio_si2_y; color = RGBf(0.1, 0.1, 0.1), linewidth = 1.4, visible = empirical_protocol_visible)
+    bio_tick_x = lift((t, v, d) -> burst_tick_vectors(t, v, offsets["si2"]; detector_kwargs(d)...)[1], bio_t2_obs, bio_v2_obs, detector_obs)
+    bio_tick_y = lift((t, v, d) -> burst_tick_vectors(t, v, offsets["si2"]; detector_kwargs(d)...)[2], bio_t2_obs, bio_v2_obs, detector_obs)
+    bio_marker_x = lift((t, v, d) -> burst_marker_vectors(t, v, offsets["si2"]; detector_kwargs(d)...)[1], bio_t2_obs, bio_v2_obs, detector_obs)
+    bio_marker_y = lift((t, v, d) -> burst_marker_vectors(t, v, offsets["si2"]; detector_kwargs(d)...)[2], bio_t2_obs, bio_v2_obs, detector_obs)
     lines!(axE, bio_tick_x, bio_tick_y; color = (:black, 0.28), linewidth = 1.0, visible = empirical_burst_markers_visible)
     scatter!(axE, bio_marker_x, bio_marker_y; color = :black, marker = :utriangle, markersize = 10, strokecolor = :white, strokewidth = 0.8, visible = empirical_burst_markers_visible)
     pre_drive_x = lift((t, v) -> matched_trace_vectors(t, v, offsets["si1"])[1], trace_obs[("presynaptic", :time)], trace_obs[("presynaptic", :V0)])
@@ -695,6 +773,14 @@ function build_dashboard()
     pre_si2_y = lift((t, v) -> matched_trace_vectors(t, v, offsets["presynaptic"])[2], trace_obs[("presynaptic", :time)], trace_obs[("presynaptic", :V1)])
     post_si2_x = lift((t, v) -> matched_trace_vectors(t, v, offsets["postsynaptic"])[1], trace_obs[("postsynaptic", :time)], trace_obs[("postsynaptic", :V1)])
     post_si2_y = lift((t, v) -> matched_trace_vectors(t, v, offsets["postsynaptic"])[2], trace_obs[("postsynaptic", :time)], trace_obs[("postsynaptic", :V1)])
+    shared_sm_x = lift((pre_t, pre_sm, post_t, post_sm) -> begin
+        any(isfinite, pre_sm) && return neuromod_trace_vectors(pre_t, pre_sm, shared_neuromod_offset(offsets))[1]
+        neuromod_trace_vectors(post_t, post_sm, shared_neuromod_offset(offsets))[1]
+    end, trace_obs[("presynaptic", :time)], trace_obs[("presynaptic", :sm)], trace_obs[("postsynaptic", :time)], trace_obs[("postsynaptic", :sm)])
+    shared_sm_y = lift((pre_t, pre_sm, post_t, post_sm) -> begin
+        any(isfinite, pre_sm) && return neuromod_trace_vectors(pre_t, pre_sm, shared_neuromod_offset(offsets))[2]
+        neuromod_trace_vectors(post_t, post_sm, shared_neuromod_offset(offsets))[2]
+    end, trace_obs[("presynaptic", :time)], trace_obs[("presynaptic", :sm)], trace_obs[("postsynaptic", :time)], trace_obs[("postsynaptic", :sm)])
     pre_si3_x = lift((t, v) -> matched_trace_vectors(t, v, offsets["presynaptic_si3"])[1], trace_obs[("presynaptic", :time)], trace_obs[("presynaptic", :V3)])
     pre_si3_y = lift((t, v) -> matched_trace_vectors(t, v, offsets["presynaptic_si3"])[2], trace_obs[("presynaptic", :time)], trace_obs[("presynaptic", :V3)])
     post_si3_x = lift((t, v) -> matched_trace_vectors(t, v, offsets["postsynaptic_si3"])[1], trace_obs[("postsynaptic", :time)], trace_obs[("postsynaptic", :V3)])
@@ -702,6 +788,7 @@ function build_dashboard()
     lines!(axE, pre_drive_x, pre_drive_y; color = RGBf(0.35, 0.35, 0.35), linewidth = 1.4, visible = scan_protocol_visible)
     lines!(axE, pre_si2_x, pre_si2_y; color = DASH_COLORS["presynaptic"], linewidth = 1.4)
     lines!(axE, post_si2_x, post_si2_y; color = DASH_COLORS["postsynaptic"], linewidth = 1.4)
+    lines!(axE, shared_sm_x, shared_sm_y; color = RGBf(0.45, 0.24, 0.62), linewidth = 1.1)
     lines!(axE, pre_si3_x, pre_si3_y; color = DASH_COLORS["presynaptic"], linewidth = 1.4, visible = cb_show_si3.checked)
     lines!(axE, post_si3_x, post_si3_y; color = DASH_COLORS["postsynaptic"], linewidth = 1.4, visible = cb_show_si3.checked)
     for mode_name in MODE_LABELS
@@ -717,7 +804,7 @@ function build_dashboard()
             scatter!(axE, marker_x, marker_y; color = DASH_COLORS[mode_name], marker = DASH_MARKERS[mode_name], markersize = 10, strokecolor = :black, strokewidth = 0.8, visible = visible)
         end
     end
-    x_min, x_max, y_min, y_max = trace_panel_limits(bio_t1, bio_v1, bio_t2, bio_v2, traces_obs[]; show_si3 = cb_show_si3.checked[])
+    x_min, x_max, y_min, y_max = trace_panel_limits(bio_t1_obs[], bio_v1_obs[], bio_t2_obs[], bio_v2_obs[], traces_obs[]; show_si3 = cb_show_si3.checked[])
     label_x = x_min + 0.045 * (x_max - x_min)
     text!(axE, label_x, offsets["si1"] + 38; text = "Si1 biology", align = (:left, :center), fontsize = 15, color = RGBf(0.35, 0.35, 0.35), visible = empirical_protocol_visible)
     text!(axE, label_x, offsets["si2"] + 38; text = "Si2 biology", align = (:left, :center), fontsize = 15, color = RGBf(0.1, 0.1, 0.1), visible = empirical_protocol_visible)
@@ -725,6 +812,7 @@ function build_dashboard()
     text!(axE, label_x, offsets["presynaptic"] + 38; text = "Si2 presynaptic", align = (:left, :center), fontsize = 15, color = DASH_COLORS["presynaptic"])
     text!(axE, label_x, offsets["presynaptic_si3"] + 38; text = "Si3 presynaptic", align = (:left, :center), fontsize = 15, color = DASH_COLORS["presynaptic"], visible = cb_show_si3.checked)
     text!(axE, label_x, offsets["postsynaptic"] + 38; text = "Si2 postsynaptic", align = (:left, :center), fontsize = 15, color = DASH_COLORS["postsynaptic"])
+    text!(axE, label_x, shared_neuromod_offset(offsets) + 22; text = "sm neuromodulation", align = (:left, :center), fontsize = 12, color = RGBf(0.45, 0.24, 0.62))
     text!(axE, label_x, offsets["postsynaptic_si3"] + 38; text = "Si3 postsynaptic", align = (:left, :center), fontsize = 15, color = DASH_COLORS["postsynaptic"], visible = cb_show_si3.checked)
     trace_panel_title(source, selected, calcium_ics) = begin
         gain = round(selected[2], digits = 3)
@@ -741,7 +829,7 @@ function build_dashboard()
     axE.ygridvisible = false
     hidespines!(axE, :t, :r)
     add_l_scale_bar!(axE, x_min, x_max, y_min, y_max)
-    reset_trace_limits!(axE, bio_t1, bio_v1, bio_t2, bio_v2, traces_obs[]; show_si3 = cb_show_si3.checked[])
+    reset_trace_limits!(axE, bio_t1_obs[], bio_v1_obs[], bio_t2_obs[], bio_v2_obs[], traces_obs[]; show_si3 = cb_show_si3.checked[])
     add_panel_label!(axE, "E")
 
     param_value(key::Symbol) = Float64(sg_params.by_key[key].value[])
@@ -754,17 +842,26 @@ function build_dashboard()
             postsyn_g0 = param_value(:postsyn_g0),
             alpha1 = param_value(:alpha1),
             beta1 = param_value(:beta1),
+            s0_floor = param_value(:s0_floor),
             alpham = param_value(:alpham),
             betam = param_value(:betam),
+            sm_floor = param_value(:sm_floor),
             ca_shift_si2 = param_value(:ca_shift_si2),
             ca_shift_si3 = param_value(:ca_shift_si3),
             presynaptic_base_g = param_value(:presynaptic_base_g),
             direct_post_base_g = param_value(:direct_post_base_g),
             presyn_alphax = param_value(:presyn_alphax),
             postsyn_alphax = param_value(:postsyn_alphax),
+            presyn_betax = param_value(:presyn_betax),
+            postsyn_betax = param_value(:postsyn_betax),
+            si3_exc_floor = param_value(:si3_exc_floor),
+            slow_inhib_g = param_value(:slow_inhib_g),
+            slow_inhib_alpha = param_value(:slow_inhib_alpha),
+            slow_inhib_beta = param_value(:slow_inhib_beta),
             si2_mutual_inhib_g = param_value(:si2_mutual_inhib_g),
             si2_mutual_inhib_alpha = param_value(:si2_mutual_inhib_alpha),
             si2_mutual_inhib_beta = param_value(:si2_mutual_inhib_beta),
+            si_inhib_floor = param_value(:si_inhib_floor),
             si3_mutual_inhib_g = param_value(:si3_mutual_inhib_g),
             si3_mutual_inhib_alpha = param_value(:si3_mutual_inhib_alpha),
             si3_mutual_inhib_beta = param_value(:si3_mutual_inhib_beta),
@@ -773,6 +870,7 @@ function build_dashboard()
     end
     current_config() = dashboard_config(Float64(sg_scan.sliders[4].value[]), Float64(sg_scan.sliders[5].value[]); detector_kwargs(current_burst_detector())...)
     current_trace_source() = cb_trace_scan_protocol.checked[] ? :scan_protocol : :empirical
+    current_trace_time_scale() = Float64(sg_timescale.sliders[1].value[])
     current_trace_calcium_ics() = (
         Ca0 = Float64(sg_trace.sliders[3].value[]),
         Ca1 = Float64(sg_trace.sliders[4].value[]),
@@ -786,10 +884,52 @@ function build_dashboard()
         burst_factor = Float64(sg_trace.sliders[10].value[]),
     )
     current_param_default_values() = [param_value(key) for key in DASHBOARD_PARAM_KEYS]
+
+    function selected_terminal_state()
+        selected = selected_obs[]
+        trace = get(traces_obs[], selected[1], DataFrame())
+        isempty(trace) && return nothing
+        all(col -> col in propertynames(trace), state_columns()) || return nothing
+        last_idx = nrow(trace)
+        terminal = [Float64(trace[last_idx, col]) for col in state_columns()]
+        any(!isfinite, terminal) && return nothing
+        return terminal
+    end
+
+    function sync_calcium_sliders_to_state!(u::Vector{Float64})
+        length(u) >= 15 || return nothing
+        for (slider, idx) in zip(sg_trace.sliders[3:7], 11:15)
+            set_close_to!(slider, clamp(Float64(u[idx]), first(slider.range[]), last(slider.range[])))
+        end
+        return nothing
+    end
+
+    function reset_current_trace_limits!()
+        source = current_trace_source()
+        reset_trace_limits!(axE, bio_t1_obs[], bio_v1_obs[], bio_t2_obs[], bio_v2_obs[], traces_obs[]; source = source == :scan_protocol ? :scan_protocol : :representative, show_si3 = cb_show_si3.checked[])
+        return nothing
+    end
+
+    function refresh_time_scaled_biology!()
+        time_scale = current_trace_time_scale()
+        trace_time_scale_obs[] = time_scale
+        t1, v1, t2, v2 = load_biology_pair(; time_scale = time_scale)
+        bio_t1_obs[] = t1
+        bio_v1_obs[] = v1
+        bio_t2_obs[] = t2
+        bio_v2_obs[] = v2
+        lx, ly = load_biological_fig2c(; time_scale = time_scale)
+        lit_x_obs[] = lx
+        lit_y_obs[] = ly
+        bio_points_obs[] = load_biological_trace_points(; time_scale = time_scale, detector_kwargs(current_burst_detector())...)
+        reset_current_trace_limits!()
+        return nothing
+    end
+
     function refresh_detector_outputs!()
         detector = current_burst_detector()
         detector_obs[] = detector
-        bio_points_obs[] = load_biological_trace_points(; detector_kwargs(detector)...)
+        bio_points_obs[] = load_biological_trace_points(; time_scale = current_trace_time_scale(), detector_kwargs(detector)...)
         model_points_obs[] = representative_model_points(traces_obs[]; detector_kwargs(detector)...)
         refresh_model_point_observables!(model_points_obs, point_obs)
         if current_trace_source() == :scan_protocol
@@ -812,19 +952,21 @@ function build_dashboard()
                 gain,
                 mode,
                 current_config();
-                display_time_scale = REPRESENTATIVE_BIOLOGY_TIME_SCALE,
+                display_time_scale = current_trace_time_scale(),
                 calcium_ics = calcium_ics,
+                initial_u0 = full_initial_state[],
             )
         else
             simulate_driven_state_trace(
                 current_param_values(mode),
                 gain,
                 mode,
-                drive_t1,
-                drive_v1;
+                bio_t1_obs[],
+                bio_v1_obs[];
                 saveat_ms = Float64(sg_scan.sliders[5].value[]),
-                display_time_scale = REPRESENTATIVE_BIOLOGY_TIME_SCALE,
+                display_time_scale = 1.0,
                 calcium_ics = calcium_ics,
+                initial_u0 = full_initial_state[],
             )
         end
         traces = copy(traces_obs[])
@@ -833,7 +975,7 @@ function build_dashboard()
         set_model_trace_observables!(trace_obs, traces)
         model_points_obs[] = representative_model_points(traces; detector_kwargs(current_burst_detector())...)
         refresh_model_point_observables!(model_points_obs, point_obs)
-        reset_trace_limits!(axE, bio_t1, bio_v1, bio_t2, bio_v2, traces; source = source == :scan_protocol ? :scan_protocol : :representative, show_si3 = cb_show_si3.checked[])
+        reset_current_trace_limits!()
         status_obs[] = "Trace complete: $(mode_name) gain=$(round(gain, digits = 4))"
         return trace
     end
@@ -849,6 +991,29 @@ function build_dashboard()
         mode_name == "postsynaptic" && return Float64(sg_trace.sliders[2].value[])
         error("Unknown representative trace mode $(mode_name)")
     end
+
+    compact_param(x; digits = 4) = string(round(Float64(x), digits = digits))
+
+    function active_mode_summary(mode::ControlMode, gain::Float64)
+        params = current_param_values(mode)
+        sim_params = mode_params(params, mode)
+        active_alpha = baseline_alphax(sim_params, mode)
+        active_g41 = baseline_g41(sim_params, mode)
+        active_g32 = baseline_g32(sim_params, mode)
+        return "$(mode_label(mode)): gain=$(compact_param(gain, digits = 3)), g0=$(compact_param(sim_params.g0)), " *
+               "alpha_x=$(compact_param(active_alpha, digits = 3)), g41=$(compact_param(active_g41)), " *
+               "g32=$(compact_param(active_g32)), beta_x=$(compact_param(sim_params.betax)), " *
+               "Ca1/3=$(compact_param(sim_params.Ca_shift1, digits = 1))/$(compact_param(sim_params.Ca_shift3, digits = 1))"
+    end
+
+    function refresh_active_parameter_readout!()
+        active_param_text[] = "Active baselines\n" *
+            active_mode_summary(presynaptic, current_gain_for_mode("presynaptic")) * "\n" *
+            active_mode_summary(postsynaptic, current_gain_for_mode("postsynaptic"))
+        return nothing
+    end
+
+    refresh_active_parameter_readout!()
 
     function run_all_traces!()
         run_trace_for_mode!(presynaptic, current_gain_for_mode("presynaptic"))
@@ -899,8 +1064,34 @@ function build_dashboard()
         for (key, value) in zip(DASHBOARD_PARAM_KEYS, param_defaults)
             set_close_to!(sg_params.by_key[key], value)
         end
+        refresh_active_parameter_readout!()
         request_trace_update!(:all)
         status_obs[] = "Parameters reset"
+        return nothing
+    end
+
+    function set_initial_conditions_to_terminal!()
+        terminal = selected_terminal_state()
+        if isnothing(terminal)
+            status_obs[] = "No complete terminal state available for selected trace"
+            return nothing
+        end
+        full_initial_state[] = terminal
+        sync_calcium_sliders_to_state!(terminal)
+        axE.title[] = trace_panel_title(current_trace_source(), selected_obs[], current_trace_calcium_ics())
+        request_trace_update!(:all)
+        status_obs[] = "Set full initial state from selected terminal state"
+        return nothing
+    end
+
+    function match_post_baseline_to_pre!()
+        set_close_to!(sg_params.by_key[:postsyn_g0], param_value(:presyn_g0))
+        set_close_to!(sg_params.by_key[:postsyn_alphax], param_value(:presyn_alphax))
+        set_close_to!(sg_params.by_key[:postsyn_betax], param_value(:presyn_betax))
+        set_close_to!(sg_params.by_key[:direct_post_base_g], param_value(:presynaptic_base_g))
+        refresh_active_parameter_readout!()
+        request_trace_update!(:all)
+        status_obs[] = "Matched postsynaptic baseline g0/alpha_x/g41/g32 to presynaptic"
         return nothing
     end
 
@@ -940,6 +1131,12 @@ function build_dashboard()
     on(reset_params_button.clicks) do _
         reset_params!()
     end
+    on(match_baselines_button.clicks) do _
+        match_post_baseline_to_pre!()
+    end
+    on(terminal_ic_button.clicks) do _
+        set_initial_conditions_to_terminal!()
+    end
     on(save_params_button.clicks) do _
         path = save_param_defaults(current_param_default_values())
         param_defaults = load_param_defaults()
@@ -947,7 +1144,7 @@ function build_dashboard()
     end
     on(save_button.clicks) do _
         trace_source = current_trace_source() == :scan_protocol ? :scan_protocol : :representative
-        clean = build_clean_figure(summary_obs[], raw_obs[], traces_obs[]; trace_source = trace_source, show_si3 = cb_show_si3.checked[], show_burst_markers = cb_show_burst_markers.checked[], detector = current_burst_detector())
+        clean = build_clean_figure(summary_obs[], raw_obs[], traces_obs[]; trace_source = trace_source, show_si3 = cb_show_si3.checked[], show_burst_markers = cb_show_burst_markers.checked[], detector = current_burst_detector(), time_scale = current_trace_time_scale())
         mkpath(DASHBOARD_OUTPUT_DIR)
         CairoMakie.save(DASHBOARD_CLEAN_PNG, clean)
         status_obs[] = "Saved $(DASHBOARD_CLEAN_PNG)"
@@ -961,11 +1158,13 @@ function build_dashboard()
     on(sg_trace.sliders[1].value) do gain
         selected = selected_obs[]
         selected[1] == "presynaptic" && (selected_obs[] = ("presynaptic", Float64(gain)))
+        refresh_active_parameter_readout!()
         request_trace_update!(:presynaptic)
     end
     on(sg_trace.sliders[2].value) do gain
         selected = selected_obs[]
         selected[1] == "postsynaptic" && (selected_obs[] = ("postsynaptic", Float64(gain)))
+        refresh_active_parameter_readout!()
         request_trace_update!(:postsynaptic)
     end
     for slider in sg_trace.sliders[3:7]
@@ -979,8 +1178,15 @@ function build_dashboard()
             refresh_detector_outputs!()
         end
     end
+    on(sg_timescale.sliders[1].value) do value
+        refresh_time_scaled_biology!()
+        axE.title[] = trace_panel_title(current_trace_source(), selected_obs[], current_trace_calcium_ics())
+        request_trace_update!(:all)
+        status_obs[] = "Trace time scale=$(round(Float64(value), digits = 2))x"
+    end
     for slider in sg_params.sliders
         on(slider.value) do _
+            refresh_active_parameter_readout!()
             request_trace_update!(:all)
         end
     end
@@ -990,12 +1196,11 @@ function build_dashboard()
     on(cb_trace_scan_protocol.checked) do _
         source = current_trace_source()
         axE.title[] = trace_panel_title(source, selected_obs[], current_trace_calcium_ics())
-        reset_trace_limits!(axE, bio_t1, bio_v1, bio_t2, bio_v2, traces_obs[]; source = source == :scan_protocol ? :scan_protocol : :representative, show_si3 = cb_show_si3.checked[])
+        reset_current_trace_limits!()
         request_trace_update!(:all)
     end
     on(cb_show_si3.checked) do show_si3
-        source = current_trace_source()
-        reset_trace_limits!(axE, bio_t1, bio_v1, bio_t2, bio_v2, traces_obs[]; source = source == :scan_protocol ? :scan_protocol : :representative, show_si3 = show_si3)
+        reset_current_trace_limits!()
     end
     on(selected_obs) do selected
         axE.title[] = trace_panel_title(current_trace_source(), selected, current_trace_calcium_ics())
@@ -1025,7 +1230,7 @@ function build_dashboard()
     colsize!(fig.layout, 2, Fixed(410))
     rowsize!(plots, 1, Fixed(240))
     rowsize!(plots, 2, Fixed(330))
-    rowsize!(plots, 3, Fixed(280))
+    rowsize!(plots, 3, Fixed(560))
     rowgap!(fig.layout, 14)
     colgap!(fig.layout, 14)
 
@@ -1042,6 +1247,7 @@ function build_dashboard()
         trace_obs = trace_obs,
         scan_controls = sg_scan,
         trace_controls = sg_trace,
+        time_scale_control = sg_timescale,
         param_controls = sg_params,
         order_menu = order_menu,
         checkboxes = (
@@ -1053,6 +1259,8 @@ function build_dashboard()
         ),
         buttons = (
             run_scan = run_scan_button,
+            set_terminal_ics = terminal_ic_button,
+            match_baselines = match_baselines_button,
             reset_params = reset_params_button,
             save_params = save_params_button,
             save = save_button,
@@ -1069,11 +1277,15 @@ function build_dashboard()
             current_config = current_config,
             current_params = current_param_values,
             current_trace_source = current_trace_source,
+            current_trace_time_scale = current_trace_time_scale,
             current_trace_calcium_ics = current_trace_calcium_ics,
+            selected_terminal_state = selected_terminal_state,
+            set_initial_conditions_to_terminal! = set_initial_conditions_to_terminal!,
             current_burst_detector = current_burst_detector,
             current_param_default_values = current_param_default_values,
             refresh_detector_outputs! = refresh_detector_outputs!,
-            reset_trace_limits! = () -> reset_trace_limits!(axE, bio_t1, bio_v1, bio_t2, bio_v2, traces_obs[]; source = current_trace_source(), show_si3 = cb_show_si3.checked[]),
+            refresh_time_scaled_biology! = refresh_time_scaled_biology!,
+            reset_trace_limits! = reset_current_trace_limits!,
         ),
     )
     DASHBOARD_HANDLE[] = handle

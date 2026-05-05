@@ -61,11 +61,13 @@ function dashboard_config(max_time_s::Float64, saveat_ms::Float64; spike_thresho
 end
 
 function dashboard_params(mode::ControlMode; x_shift_si2::Float64, x_shift_si3::Float64, presyn_g0::Float64, postsyn_g0::Float64,
-    alpha1::Float64, beta1::Float64, alpham::Float64, betam::Float64,
+    alpha1::Float64, beta1::Float64, s0_floor::Float64, alpham::Float64, betam::Float64, sm_floor::Float64,
     ca_shift_si2::Float64, ca_shift_si3::Float64,
     presynaptic_base_g::Float64, direct_post_base_g::Float64, presyn_alphax::Float64, postsyn_alphax::Float64,
+    presyn_betax::Float64, postsyn_betax::Float64, si3_exc_floor::Float64,
+    slow_inhib_g::Float64, slow_inhib_alpha::Float64, slow_inhib_beta::Float64,
     si2_mutual_inhib_g::Float64, si2_mutual_inhib_alpha::Float64, si2_mutual_inhib_beta::Float64,
-    si3_mutual_inhib_g::Float64, si3_mutual_inhib_alpha::Float64, si3_mutual_inhib_beta::Float64, t1_ms::Float64)
+    si_inhib_floor::Float64, si3_mutual_inhib_g::Float64, si3_mutual_inhib_alpha::Float64, si3_mutual_inhib_beta::Float64, t1_ms::Float64)
     params = calibrated_params(mode)
     return updated_params(
         params;
@@ -78,9 +80,11 @@ function dashboard_params(mode::ControlMode; x_shift_si2::Float64, x_shift_si3::
         alpha1 = alpha1,
         beta1 = beta1,
         scale1 = alpha1 / (alpha1 + beta1),
+        s0_floor = s0_floor,
         alpham = alpham,
         betam = betam,
         scale_sm = (alpham - betam) / alpham,
+        sm_floor = sm_floor,
         presynaptic_base_alpha = presyn_alphax,
         Ca_shift1 = ca_shift_si2,
         Ca_shift2 = ca_shift_si2,
@@ -89,11 +93,19 @@ function dashboard_params(mode::ControlMode; x_shift_si2::Float64, x_shift_si3::
         presynaptic_base_g = presynaptic_base_g,
         direct_post_base_g = direct_post_base_g,
         alphax = postsyn_alphax,
+        betax = mode == presynaptic ? presyn_betax : postsyn_betax,
+        si3_exc_floor = si3_exc_floor,
+        g14 = slow_inhib_g,
+        g23 = slow_inhib_g,
+        alphai = slow_inhib_alpha,
+        betai = slow_inhib_beta,
+        scalei = slow_inhib_alpha / (slow_inhib_alpha + slow_inhib_beta),
         g12 = si2_mutual_inhib_g,
         g21 = si2_mutual_inhib_g,
         alpha2 = si2_mutual_inhib_alpha,
         beta2 = si2_mutual_inhib_beta,
         scale2 = si2_mutual_inhib_alpha / (si2_mutual_inhib_alpha + si2_mutual_inhib_beta),
+        si_inhib_floor = si_inhib_floor,
         g34 = si3_mutual_inhib_g,
         g43 = si3_mutual_inhib_g,
         alpha3 = si3_mutual_inhib_alpha,
@@ -117,8 +129,10 @@ function run_scan_point(params::ModelParams, mode::ControlMode, gain::Float64, c
     summary[!, :si1_excitatory_g] .= params.g0
     summary[!, :alpha1] .= params.alpha1
     summary[!, :beta1] .= params.beta1
+    summary[!, :s0_floor] .= params.s0_floor
     summary[!, :alpham] .= params.alpham
     summary[!, :betam] .= params.betam
+    summary[!, :sm_floor] .= params.sm_floor
     summary[!, :ca_shift_si2] .= params.Ca_shift1
     summary[!, :ca_shift_si3] .= params.Ca_shift3
     summary[!, :x_shift_si2] .= params.x_shift1
@@ -128,9 +142,15 @@ function run_scan_point(params::ModelParams, mode::ControlMode, gain::Float64, c
     summary[!, :presynaptic_base_alpha] .= params.presynaptic_base_alpha
     summary[!, :postsynaptic_base_alpha] .= params.alphax
     summary[!, :alphax] .= params.alphax
+    summary[!, :betax] .= params.betax
+    summary[!, :si3_exc_floor] .= params.si3_exc_floor
+    summary[!, :slow_inhib_g] .= params.g14
+    summary[!, :slow_inhib_alpha] .= params.alphai
+    summary[!, :slow_inhib_beta] .= params.betai
     summary[!, :si2_mutual_inhib_g] .= params.g12
     summary[!, :si2_mutual_inhib_alpha] .= params.alpha2
     summary[!, :si2_mutual_inhib_beta] .= params.beta2
+    summary[!, :si_inhib_floor] .= params.si_inhib_floor
     summary[!, :si3_mutual_inhib_g] .= params.g34
     summary[!, :si3_mutual_inhib_alpha] .= params.alpha3
     summary[!, :si3_mutual_inhib_beta] .= params.beta3
@@ -182,8 +202,22 @@ function representative_model_points(traces::Dict{String, DataFrame}; spike_thre
     return vcat(parts...)
 end
 
+state_column(i::Int) = Symbol(:u, i)
+state_columns() = [state_column(i) for i in 1:37]
+
+function add_state_columns!(df::DataFrame, states::AbstractMatrix{<:Real})
+    for i in 1:min(size(states, 1), 37)
+        df[!, state_column(i)] = Float64.(states[i, :])
+    end
+    return df
+end
+
 function empty_trace_df()
-    DataFrame(mode = String[], control_gain = Float64[], time_s = Float64[], V0 = Float64[], V1 = Float64[], V3 = Float64[], V4 = Float64[])
+    df = DataFrame(mode = String[], control_gain = Float64[], time_s = Float64[], V0 = Float64[], V1 = Float64[], V3 = Float64[], V4 = Float64[], sm = Float64[])
+    for col in state_columns()
+        df[!, col] = Float64[]
+    end
+    return df
 end
 
 function empty_representative_traces()
@@ -205,7 +239,11 @@ function load_representative_traces()
                 V1 = Float64.(sub.V1),
                 V3 = fill(NaN, nrow(sub)),
                 V4 = fill(NaN, nrow(sub)),
+                sm = :sm in propertynames(sub) ? Float64.(sub.sm) : fill(NaN, nrow(sub)),
             )
+            for col in state_columns()
+                traces[mode_name][!, col] = col in propertynames(sub) ? Float64.(sub[!, col]) : fill(NaN, nrow(sub))
+            end
         end
     end
     return traces
@@ -233,9 +271,10 @@ function apply_calcium_initial_conditions(u0::Vector{Float64}, calcium_ics)
 end
 
 function simulate_driven_state_trace(params::ModelParams, gain::Float64, mode::ControlMode,
-    drive_time_s::Vector{Float64}, drive_voltage_mv::Vector{Float64}; saveat_ms::Float64, display_time_scale::Float64 = 1.0, calcium_ics = nothing)
+    drive_time_s::Vector{Float64}, drive_voltage_mv::Vector{Float64}; saveat_ms::Float64, display_time_scale::Float64 = 1.0, calcium_ics = nothing, initial_u0 = nothing)
     sim_params = mode_params(params, mode)
-    u0 = apply_calcium_initial_conditions(settled_initial_state(params, gain, mode), calcium_ics)
+    base_u0 = isnothing(initial_u0) ? settled_initial_state(params, gain, mode) : Float64.(copy(initial_u0))
+    u0 = apply_calcium_initial_conditions(base_u0, calcium_ics)
     problem = ODEProblem(
         publication_driven_network_ode!,
         u0,
@@ -246,7 +285,7 @@ function simulate_driven_state_trace(params::ModelParams, gain::Float64, mode::C
     states = Array(solution)
     solver_time_s = solution.t ./ 1000.0
     display_time_s = solver_time_s .* display_time_scale
-    return DataFrame(
+    df = DataFrame(
         mode = fill(mode_label(mode), length(display_time_s)),
         control_gain = fill(gain, length(display_time_s)),
         time_s = display_time_s,
@@ -254,13 +293,16 @@ function simulate_driven_state_trace(params::ModelParams, gain::Float64, mode::C
         V1 = states[2, :],
         V3 = states[4, :],
         V4 = states[5, :],
+        sm = states[37, :],
     )
+    return add_state_columns!(df, states)
 end
 
-function simulate_scan_state_trace(params::ModelParams, gain::Float64, mode::ControlMode, config::SweepConfig; display_time_scale::Float64 = 1.0, calcium_ics = nothing)
-    u0 = apply_calcium_initial_conditions(initial_state(), calcium_ics)
+function simulate_scan_state_trace(params::ModelParams, gain::Float64, mode::ControlMode, config::SweepConfig; display_time_scale::Float64 = 1.0, calcium_ics = nothing, initial_u0 = nothing)
+    base_u0 = isnothing(initial_u0) ? initial_state() : Float64.(copy(initial_u0))
+    u0 = apply_calcium_initial_conditions(base_u0, calcium_ics)
     sim = run_simulation(params, gain, mode, config; initial_u0 = u0)
-    return DataFrame(
+    df = DataFrame(
         mode = fill(mode_label(mode), length(sim.time_s)),
         control_gain = fill(gain, length(sim.time_s)),
         time_s = Float64.(sim.time_s) .* display_time_scale,
@@ -268,7 +310,12 @@ function simulate_scan_state_trace(params::ModelParams, gain::Float64, mode::Con
         V1 = Float64.(sim.V1),
         V3 = Float64.(sim.V3),
         V4 = Float64.(sim.V4),
+        sm = Float64.(sim.sm),
     )
+    if hasproperty(sim, :states)
+        return add_state_columns!(df, sim.states)
+    end
+    return df
 end
 
 function finite_cols(df::DataFrame, xcol::Symbol, ycol::Symbol)

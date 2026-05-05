@@ -103,16 +103,16 @@ function publication_driven_network_ode!(du, u, p, t_ms)
     du[26] = 0.5 * ((1.0 / (1.0 + exp(10.0 * (V1 + 53.0)))) - y1) / (7.1 + 10.4 / (1.0 + exp((V1 + 68.0) / 2.2)))
     du[27] = 0.5 * ((1.0 / (1.0 + exp(10.0 * (V2 + 53.0)))) - y2) / (7.1 + 10.4 / (1.0 + exp((V2 + 68.0) / 2.2)))
 
-    du[28] = params.alpha1 * (1.0 - s0) * syn_activation(V0) - params.beta1 * s0
-    du[29] = params.alphai * s1 * (1.0 - s1) * syn_activation(V1) - params.betai * (s1 - 0.0001)
-    du[30] = params.alphai * s2 * (1.0 - s2) * syn_activation(V2) - params.betai * (s2 - 0.0001)
-    du[31] = alpha_exc_eff * s3 * (1.0 - s3) * syn_activation(V3) - params.betax * (s3 - 0.0001)
-    du[32] = alpha_exc_eff * s4 * (1.0 - s4) * syn_activation(V4) - params.betax * (s4 - 0.0001)
+    du[28] = params.alpha1 * (1.0 - s0) * syn_activation(V0) - params.beta1 * (s0 - params.s0_floor)
+    du[29] = params.alphai * s1 * (1.0 - s1) * syn_activation(V1) - params.betai * (s1 - params.si_inhib_floor)
+    du[30] = params.alphai * s2 * (1.0 - s2) * syn_activation(V2) - params.betai * (s2 - params.si_inhib_floor)
+    du[31] = alpha_exc_eff * s3 * (1.0 - s3) * syn_activation(V3) - params.betax * (s3 - params.si3_exc_floor)
+    du[32] = alpha_exc_eff * s4 * (1.0 - s4) * syn_activation(V4) - params.betax * (s4 - params.si3_exc_floor)
     du[33] = params.alpha2 * (1.0 - s12) * syn_activation(V1) - params.beta2 * s12
     du[34] = params.alpha2 * (1.0 - s21) * syn_activation(V2) - params.beta2 * s21
     du[35] = params.alpha3 * (1.0 - s34) * syn_activation(V3) - params.beta3 * s34
     du[36] = params.alpha3 * (1.0 - s43) * syn_activation(V4) - params.beta3 * s43
-    du[37] = params.alpham * sm * (1.0 - sm) * syn_activation(V0) - params.betam * (sm - 0.0001)
+    du[37] = params.alpham * sm * (1.0 - sm) * syn_activation(V0) - params.betam * (sm - params.sm_floor)
     return nothing
 end
 

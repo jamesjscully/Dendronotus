@@ -41,10 +41,12 @@ struct ModelParams
     alpha1::Float64
     beta1::Float64
     scale1::Float64
+    s0_floor::Float64
     g0::Float64
     alpham::Float64
     betam::Float64
     scale_sm::Float64
+    sm_floor::Float64
     alphax::Float64
     betax::Float64
     g41::Float64
@@ -54,11 +56,13 @@ struct ModelParams
     alphai::Float64
     betai::Float64
     scalei::Float64
+    si_inhib_floor::Float64
     alpha3::Float64
     beta3::Float64
     scale3::Float64
     g34::Float64
     g43::Float64
+    si3_exc_floor::Float64
     alpha2::Float64
     beta2::Float64
     scale2::Float64
@@ -126,14 +130,18 @@ end
 function default_params()
     alpha1 = 0.01
     beta1 = 0.002
+    s0_floor = 0.01
     alpham = 0.005
     betam = 0.0001
+    sm_floor = 0.01
     alphax = 0.05
     betax = 0.001
     alphai = 0.012
     betai = 0.001
+    si_inhib_floor = 0.01
     alpha3 = 0.01
     beta3 = 0.004
+    si3_exc_floor = 0.01
     alpha2 = 0.01
     beta2 = 0.005
 
@@ -145,10 +153,12 @@ function default_params()
         alpha1,
         beta1,
         alpha1 / (alpha1 + beta1),
+        s0_floor,
         0.002,
         alpham,
         betam,
         (alpham - betam) / alpham,
+        sm_floor,
         alphax,
         betax,
         0.000625,
@@ -158,11 +168,13 @@ function default_params()
         alphai,
         betai,
         (alphai - betai) / alphai,
+        si_inhib_floor,
         alpha3,
         beta3,
         alpha3 / (alpha3 + beta3),
         0.02,
         0.02,
+        si3_exc_floor,
         alpha2,
         beta2,
         alpha2 / (alpha2 + beta2),
@@ -536,18 +548,18 @@ function network_ode!(du, u, p, t_ms)
     du[26] = 0.5 * ((1.0 / (1.0 + exp(10.0 * (V1 + 53.0)))) - y1) / (7.1 + 10.4 / (1.0 + exp((V1 + 68.0) / 2.2)))
     du[27] = 0.5 * ((1.0 / (1.0 + exp(10.0 * (V2 + 53.0)))) - y2) / (7.1 + 10.4 / (1.0 + exp((V2 + 68.0) / 2.2)))
 
-    du[28] = params.alpha1 * (1.0 - s0) * syn_activation(V0) - params.beta1 * s0
-    du[29] = params.alphai * s1 * (1.0 - s1) * syn_activation(V1) - params.betai * (s1 - 0.0001)
-    du[30] = params.alphai * s2 * (1.0 - s2) * syn_activation(V2) - params.betai * (s2 - 0.0001)
-    du[31] = alpha_exc_eff * s3 * (1.0 - s3) * syn_activation(V3) - params.betax * (s3 - 0.0001)
-    du[32] = alpha_exc_eff * s4 * (1.0 - s4) * syn_activation(V4) - params.betax * (s4 - 0.0001)
+    du[28] = params.alpha1 * (1.0 - s0) * syn_activation(V0) - params.beta1 * (s0 - params.s0_floor)
+    du[29] = params.alphai * s1 * (1.0 - s1) * syn_activation(V1) - params.betai * (s1 - params.si_inhib_floor)
+    du[30] = params.alphai * s2 * (1.0 - s2) * syn_activation(V2) - params.betai * (s2 - params.si_inhib_floor)
+    du[31] = alpha_exc_eff * s3 * (1.0 - s3) * syn_activation(V3) - params.betax * (s3 - params.si3_exc_floor)
+    du[32] = alpha_exc_eff * s4 * (1.0 - s4) * syn_activation(V4) - params.betax * (s4 - params.si3_exc_floor)
 
     du[33] = params.alpha2 * (1.0 - s12) * syn_activation(V1) - params.beta2 * s12
     du[34] = params.alpha2 * (1.0 - s21) * syn_activation(V2) - params.beta2 * s21
     du[35] = params.alpha3 * (1.0 - s34) * syn_activation(V3) - params.beta3 * s34
     du[36] = params.alpha3 * (1.0 - s43) * syn_activation(V4) - params.beta3 * s43
 
-    du[37] = params.alpham * sm * (1.0 - sm) * syn_activation(V0) - params.betam * (sm - 0.0001)
+    du[37] = params.alpham * sm * (1.0 - sm) * syn_activation(V0) - params.betam * (sm - params.sm_floor)
     return nothing
 end
 
@@ -597,6 +609,7 @@ function run_simulation(params::ModelParams, control_gain::Float64, mode::Contro
         V2 = states[3, :],
         V3 = states[4, :],
         V4 = states[5, :],
+        states = states,
         s3 = states[31, :],
         s4 = states[32, :],
         sm = states[37, :],
