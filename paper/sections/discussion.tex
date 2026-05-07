@@ -17,7 +17,7 @@ This terminology provides a unifying concept linking synaptic and cellular mecha
 
 \subsection*{Presynaptic modulation provides smooth frequency control}
 
-Presynaptic modulation of the accumulation rate parameter $\alpha$ in the logistic Si3$\to$Si2 excitatory synapses produces smooth, graded control of burst frequency (Fig.~\ref{fig:si1_neuromod}D), whereas postsynaptic modulation of $g_{syn}$ in the same synapses yields threshold-like transitions between oscillatory regimes (Fig.~\ref{fig:si1_neuromod}E).
+Presynaptic modulation of the accumulation rate parameter $\alpha$ in the logistic Si3$\to$Si2 excitatory synapses produces a broader, smoother control of burst frequency during sustained drive (Fig.~\ref{fig:si1_neuromod}C), whereas postsynaptic modulation of $g_{syn}$ in the same synapses occupies a narrower and less graded response band.
 From a control-theoretic perspective, presynaptic modulation creates a more favorable landscape: small changes in neuromodulatory input produce proportional changes in network output.
 
 This distinction builds on Skinner, Kopell, and Marder's (1994) analysis showing that oscillation mechanisms relying on intrinsic cellular properties render frequency insensitive to synaptic parameters, while mechanisms relying on synaptic dynamics render frequency sensitive to those parameters \cite{SKM94}.
@@ -51,7 +51,7 @@ This observation supports the interpretation that multiple synaptic routes can s
 A distinct property is adaptability: the capacity to adjust output frequency in response to modulatory signals.
 Skinner, Kopell, and Marder (1994) showed that when phase transitions depend on intrinsic cellular mechanisms (escape or release from cellular bistability), network frequency is relatively insensitive to synaptic parameters; when transitions depend on synaptic mechanisms, frequency becomes tunable through those parameters \cite{SKM94}.
 Because network hysteresis locates the slow variable in synaptic dynamics rather than cellular currents, frequency control naturally operates through synaptic modulation.
-Our results confirm this: presynaptic modulation of release kinetics produces smooth, graded frequency changes (Fig.~\ref{fig:si1_neuromod}D), whereas postsynaptic conductance modulation produces threshold-like transitions (Fig.~\ref{fig:si1_neuromod}E).
+Our results confirm this: presynaptic modulation of release kinetics produces smoother, more graded frequency changes during ongoing drive (Fig.~\ref{fig:si1_neuromod}C), whereas postsynaptic conductance modulation is less effective at spanning the biological control range summarized in Fig.~\ref{fig:si1_neuromod}B.
 The absence of cellular bistability thus enables controllability---frequency can be tuned through a single synaptic parameter without requiring coordinated changes across multiple intrinsic conductances.
 
 These observations suggest a relationship between network hysteresis and functional circuit properties.
@@ -85,4 +85,5 @@ Several limitations should be acknowledged.
 Our validation emphasizes qualitative reproduction of experimental perturbation responses rather than statistical fitting of burst parameters.
 Direct experimental evidence for whether Si1-driven frequency control operates through presynaptic or postsynaptic modulation remains to be established.
 We model Si1 as a single neuron, whereas the biological system employs electrically coupled bilateral Si1L and Si1R neurons, and we omit sensory feedback and descending inputs beyond Si1.
+Although the model captures graded frequency control during active drive, initiation and termination of swim episodes are still only approximate, leaving room for improvement in how command-neuron recruitment and release are represented.
 The model's rapid recovery across diverse perturbation conditions (Fig.~\ref{fig:perturbation_responses}) provides functional evidence that the distributed architecture confers stability.

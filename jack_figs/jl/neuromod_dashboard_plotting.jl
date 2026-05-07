@@ -136,16 +136,16 @@ end
 
 function trace_offsets()
     return Dict(
-        "si1" => 360.0,
+        "si1" => 348.0,
         "si2" => 265.0,
-        "presynaptic" => 145.0,
+        "presynaptic" => 135.0,
         "presynaptic_si3" => 70.0,
-        "postsynaptic" => -25.0,
-        "postsynaptic_si3" => -100.0,
+        "postsynaptic" => 42.0,
+        "postsynaptic_si3" => -45.0,
     )
 end
 
-shared_neuromod_offset(offsets) = offsets["si2"] - 58.0
+shared_neuromod_offset(offsets) = offsets["si2"] - 88.0
 
 function neuromod_trace_vectors(time_s, sm, base_offset::Float64)
     t, y = matched_trace_vectors(time_s, sm, 0.0)
@@ -153,7 +153,7 @@ function neuromod_trace_vectors(time_s, sm, base_offset::Float64)
     if isempty(y) || !any(keep)
         return Float64[], Float64[]
     end
-    return t[keep], base_offset .+ 34.0 .* clamp.(y[keep], 0.0, 1.5)
+    return t[keep], base_offset .+ 20.0 .* clamp.(y[keep], 0.0, 1.5)
 end
 
 function add_panel_label!(ax::Axis, label::String)
@@ -206,6 +206,43 @@ function matched_xy_vectors(x::AbstractVector{<:Real}, y::AbstractVector{<:Real}
     return Float64.(x[1:n]), Float64.(y[1:n])
 end
 
+function compare_panel_limits(lit_x::AbstractVector{<:Real}, lit_y::AbstractVector{<:Real}, model_points::DataFrame, bio_points::DataFrame)
+    xvals = Float64[]
+    yvals = Float64[]
+
+    lx, ly = matched_xy_vectors(lit_x, lit_y)
+    append!(xvals, lx)
+    append!(yvals, ly)
+    ltx, lty = trend_line_vectors(lx, ly)
+    append!(xvals, ltx)
+    append!(yvals, lty)
+
+    bio_x, bio_y = finite_cols(bio_points, :si1_frequency_hz, :burst_frequency_hz)
+    append!(xvals, bio_x)
+    append!(yvals, bio_y)
+    bio_tx, bio_ty = trend_line_vectors(bio_x, bio_y)
+    append!(xvals, bio_tx)
+    append!(yvals, bio_ty)
+
+    for mode_name in MODE_LABELS
+        x, y = model_point_vectors(model_points, mode_name)
+        append!(xvals, x)
+        append!(yvals, y)
+        tx, ty = trend_line_vectors(x, y)
+        append!(xvals, tx)
+        append!(yvals, ty)
+    end
+
+    xvals = xvals[isfinite.(xvals)]
+    yvals = yvals[isfinite.(yvals)]
+
+    x_hi = isempty(xvals) ? 6.5 : 1.08 * maximum(xvals)
+    y_hi = isempty(yvals) ? 0.21 : 1.12 * maximum(yvals)
+    x_hi = max(1.0, x_hi)
+    y_hi = max(0.21, y_hi)
+    return 0.0, x_hi, 0.0, y_hi
+end
+
 function compare_panel_ylimit(model_points::DataFrame, bio_points::DataFrame)
     vals = Float64[]
     for mode_name in MODE_LABELS
@@ -242,12 +279,6 @@ function plot_compare_panel!(ax::Axis, model_points::DataFrame; detector = (spik
     lit_x, lit_y = load_biological_fig2c(; time_scale = time_scale)
     bio_points = load_biological_trace_points(; time_scale = time_scale, detector_kwargs(detector)...)
     bio_x, bio_y = finite_cols(bio_points, :si1_frequency_hz, :burst_frequency_hz)
-    scatter!(ax, lit_x, lit_y; color = LITERATURE_GREY, marker = :circle, markersize = 10, strokecolor = :black, strokewidth = 0.8)
-    scatter!(ax, bio_x, bio_y; color = :black, marker = :utriangle, markersize = 10, strokecolor = :white, strokewidth = 0.8)
-    for mode_name in MODE_LABELS
-        x, y = model_point_vectors(model_points, mode_name)
-        scatter!(ax, x, y; color = (DASH_COLORS[mode_name], 0.84), marker = DASH_MARKERS[mode_name], markersize = 10, strokecolor = :black, strokewidth = 0.8)
-    end
     lit_tx, lit_ty = trend_line_vectors(lit_x, lit_y)
     lines!(ax, lit_tx, lit_ty; color = LITERATURE_GREY, linewidth = 3.0)
     tx, ty = trend_line_vectors(bio_x, bio_y)
@@ -257,25 +288,33 @@ function plot_compare_panel!(ax::Axis, model_points::DataFrame; detector = (spik
         tx, ty = trend_line_vectors(x, y)
         lines!(ax, tx, ty; color = DASH_COLORS[mode_name], linewidth = 4.0)
     end
+    scatter!(ax, lit_x, lit_y; color = LITERATURE_GREY, marker = :circle, markersize = 10, strokecolor = :black, strokewidth = 0.8)
+    scatter!(ax, bio_x, bio_y; color = :black, marker = :utriangle, markersize = 10, strokecolor = :white, strokewidth = 0.8)
+    for mode_name in MODE_LABELS
+        x, y = model_point_vectors(model_points, mode_name)
+        scatter!(ax, x, y; color = (DASH_COLORS[mode_name], 0.84), marker = DASH_MARKERS[mode_name], markersize = 10, strokecolor = :black, strokewidth = 0.8)
+    end
     ax.title = "Si1 Rate vs Burst Rate"
-    ax.xlabel = "Si1 spike freq (Hz)"
+    ax.xlabel = "Si1 spike rate (spikes/s)"
     ax.ylabel = "Burst freq (Hz)"
-    xlims!(ax, 0, 6.5)
-    ylims!(ax, 0, compare_panel_ylimit(model_points, bio_points))
+    x0, x1, y0, y1 = compare_panel_limits(lit_x, lit_y, model_points, bio_points)
+    xlims!(ax, x0, x1)
+    ylims!(ax, y0, y1)
     hidespines!(ax, :t, :r)
 end
 
-function add_l_scale_bar!(ax::Axis, x_min::Float64, x_max::Float64, y_min::Float64, y_max::Float64; time_len_s::Float64 = 20.0, volt_len_mv::Float64 = 50.0)
+function add_l_scale_bar!(ax::Axis, x_min::Float64, x_max::Float64, y_min::Float64, y_max::Float64; time_len_s::Float64 = 20.0, volt_len_mv::Float64 = 50.0, display_time_scale::Float64 = 1.0)
     x_span = x_max - x_min
     y_span = y_max - y_min
+    displayed_time_len_s = time_len_s * display_time_scale
     x1 = x_max - 0.06 * x_span
-    x0 = x1 - time_len_s
+    x0 = x1 - displayed_time_len_s
     y0 = y_min + 0.12 * y_span
     y1 = y0 + volt_len_mv
     lines!(ax, [x0, x0], [y0, y1]; color = :black, linewidth = 3)
     lines!(ax, [x0, x1], [y0, y0]; color = :black, linewidth = 3)
-    text!(ax, x0 + 0.03 * x_span, (y0 + y1) / 2; text = "$(Int(round(volt_len_mv))) mV", rotation = pi / 2, align = (:center, :center), fontsize = 14, color = :black)
-    text!(ax, (x0 + x1) / 2, y0 - 0.06 * y_span; text = "$(Int(round(time_len_s))) s", align = (:center, :center), fontsize = 14, color = :black)
+    text!(ax, x0 - 0.012 * x_span, (y0 + y1) / 2; text = "$(Int(round(volt_len_mv))) mV", rotation = pi / 2, align = (:center, :center), fontsize = 14, color = :black)
+    text!(ax, (x0 + x1) / 2, y0 - 0.022 * y_span; text = "$(Int(round(time_len_s))) s", align = (:center, :center), fontsize = 14, color = :black)
 end
 
 function burst_marker_vectors(time_s, voltage_mv, offset::Float64; spike_threshold_mv::Float64 = -20.0, spike_refractory_s::Float64 = 0.02, burst_factor::Float64 = 2.0)
@@ -300,9 +339,7 @@ function burst_tick_vectors(time_s, voltage_mv, offset::Float64; spike_threshold
 end
 
 function plot_burst_markers!(ax::Axis, time_s, voltage_mv, offset::Float64; color = :black, marker = :circle, strokecolor = :black, visible = true, detector = (spike_threshold_mv = -20.0, spike_refractory_s = 0.02, burst_factor = 3.0))
-    tx, ty = burst_tick_vectors(time_s, voltage_mv, offset; detector_kwargs(detector)...)
     mx, my = burst_marker_vectors(time_s, voltage_mv, offset; detector_kwargs(detector)...)
-    lines!(ax, tx, ty; color = (color, 0.28), linewidth = 1.0, visible = visible)
     scatter!(ax, mx, my; color = color, marker = marker, markersize = 10, strokecolor = strokecolor, strokewidth = 0.8, visible = visible)
 end
 
@@ -352,7 +389,7 @@ function trace_panel_limits(bio_t1, bio_v1, bio_t2, bio_v2, traces::Dict{String,
             push!(ymaxs, maximum(sm_vals))
         end
     end
-    return minimum(xs), maximum(xs), minimum(ymins) - 12.0, maximum(ymaxs) + 60.0
+    return minimum(xs), maximum(xs), minimum(ymins) - 12.0, maximum(ymaxs) + 20.0
 end
 
 function reset_trace_limits!(ax::Axis, bio_t1, bio_v1, bio_t2, bio_v2, traces::Dict{String, DataFrame}; source::Symbol = :representative, show_si3::Bool = false)
@@ -449,9 +486,10 @@ function plot_gain_panel!(ax::Axis, summary::DataFrame, raw::DataFrame, phase::S
     ax.title = phase == "pre" ? "During Drive" : "After Drive Removal"
     xlims!(ax, 0, 8)
     ylims!(ax, phase == "post" ? -0.005 : 0.0, 0.22)
+    hidespines!(ax, :t, :r)
 end
 
-function plot_representative_traces!(ax::Axis, bio_t1, bio_v1, bio_t2, bio_v2, traces::Dict{String, DataFrame}; source::Symbol = :representative, show_si3::Bool = false, show_burst_markers::Bool = true, detector = (spike_threshold_mv = -20.0, spike_refractory_s = 0.02, burst_factor = 3.0))
+function plot_representative_traces!(ax::Axis, bio_t1, bio_v1, bio_t2, bio_v2, traces::Dict{String, DataFrame}; source::Symbol = :representative, show_si3::Bool = false, show_burst_markers::Bool = true, detector = (spike_threshold_mv = -20.0, spike_refractory_s = 0.02, burst_factor = 3.0), time_scale::Float64 = 1.0)
     offsets = trace_offsets()
     if source == :scan_protocol && !isempty(traces["presynaptic"]) && !isempty(traces["postsynaptic"])
         lines!(ax, traces["presynaptic"].time_s, Float64.(traces["presynaptic"].V0) .+ offsets["si1"]; color = RGBf(0.35, 0.35, 0.35), linewidth = 1.4)
@@ -473,22 +511,24 @@ function plot_representative_traces!(ax::Axis, bio_t1, bio_v1, bio_t2, bio_v2, t
     sm_trace = !isempty(traces["presynaptic"]) ? traces["presynaptic"] : traces["postsynaptic"]
     if !isempty(sm_trace) && :sm in propertynames(sm_trace)
         sm_x, sm_y = neuromod_trace_vectors(sm_trace.time_s, sm_trace.sm, shared_neuromod_offset(offsets))
-        lines!(ax, sm_x, sm_y; color = RGBf(0.45, 0.24, 0.62), linewidth = 1.1)
+        lines!(ax, sm_x, sm_y; color = RGBf(0.45, 0.24, 0.62), linewidth = 1.8)
     end
     x_min, x_max, y_min, y_max = trace_panel_limits(bio_t1, bio_v1, bio_t2, bio_v2, traces; source = source, show_si3 = show_si3)
-    label_x = x_min + 0.045 * (x_max - x_min)
+    label_x = x_min + 0.002 * (x_max - x_min)
+    presyn_label_x = x_min + 0.010 * (x_max - x_min)
+    postsyn_label_x = x_min + 0.0162 * (x_max - x_min)
     if source == :scan_protocol
-        text!(ax, label_x, offsets["si1"] + 38; text = "Si1 presyn scan", align = (:left, :center), fontsize = 15, color = RGBf(0.35, 0.35, 0.35))
+        text!(ax, label_x, offsets["si1"] + 26; text = "Si1 presyn scan", align = (:left, :center), fontsize = 15, color = RGBf(0.35, 0.35, 0.35))
     else
-        text!(ax, label_x, offsets["si1"] + 38; text = "Si1 biology", align = (:left, :center), fontsize = 15, color = RGBf(0.35, 0.35, 0.35))
-        text!(ax, label_x, offsets["si2"] + 38; text = "Si2 biology", align = (:left, :center), fontsize = 15, color = RGBf(0.1, 0.1, 0.1))
+        text!(ax, label_x, offsets["si1"] + 11; text = "Si1 biology", align = (:left, :center), fontsize = 15, color = RGBf(0.35, 0.35, 0.35))
+        text!(ax, label_x, offsets["si2"] + 11; text = "Si2 biology", align = (:left, :center), fontsize = 15, color = RGBf(0.1, 0.1, 0.1))
     end
-    text!(ax, label_x, offsets["presynaptic"] + 38; text = "Si2 presynaptic", align = (:left, :center), fontsize = 15, color = DASH_COLORS["presynaptic"])
+    text!(ax, presyn_label_x, offsets["presynaptic"] + 8; text = "Si2 presynaptic", align = (:left, :center), fontsize = 15, color = DASH_COLORS["presynaptic"])
     if show_si3
         text!(ax, label_x, offsets["presynaptic_si3"] + 38; text = "Si3 presynaptic", align = (:left, :center), fontsize = 15, color = DASH_COLORS["presynaptic"])
     end
-    text!(ax, label_x, offsets["postsynaptic"] + 38; text = "Si2 postsynaptic", align = (:left, :center), fontsize = 15, color = DASH_COLORS["postsynaptic"])
-    text!(ax, label_x, shared_neuromod_offset(offsets) + 22; text = "sm neuromodulation", align = (:left, :center), fontsize = 12, color = RGBf(0.45, 0.24, 0.62))
+    text!(ax, postsyn_label_x, offsets["postsynaptic"] + 11; text = "Si2 postsynaptic", align = (:left, :center), fontsize = 15, color = DASH_COLORS["postsynaptic"])
+    text!(ax, label_x, shared_neuromod_offset(offsets) + 15; text = "sm neuromodulation", align = (:left, :center), fontsize = 15, color = RGBf(0.45, 0.24, 0.62))
     if show_si3
         text!(ax, label_x, offsets["postsynaptic_si3"] + 38; text = "Si3 postsynaptic", align = (:left, :center), fontsize = 15, color = DASH_COLORS["postsynaptic"])
     end
@@ -503,30 +543,26 @@ function plot_representative_traces!(ax::Axis, bio_t1, bio_v1, bio_t2, bio_v2, t
     hidespines!(ax, :t, :r)
     xlims!(ax, x_min, x_max)
     ylims!(ax, y_min, y_max)
-    add_l_scale_bar!(ax, x_min, x_max, y_min, y_max)
+    add_l_scale_bar!(ax, x_min, x_max, y_min, y_max; display_time_scale = time_scale)
 end
 
 function build_clean_figure(summary::DataFrame, raw::DataFrame, traces::Dict{String, DataFrame}; trace_source::Symbol = :representative, show_si3::Bool = false, show_burst_markers::Bool = true, detector = (spike_threshold_mv = -20.0, spike_refractory_s = 0.02, burst_factor = 3.0), time_scale::Float64 = REPRESENTATIVE_BIOLOGY_TIME_SCALE)
     bio_t1, bio_v1, bio_t2, bio_v2 = load_biology_pair(; time_scale = time_scale)
-    fig = Figure(size = (1180, 1320), backgroundcolor = :white, fontsize = 18)
+    fig = Figure(size = (1600, 980), backgroundcolor = :white, fontsize = 18)
     axA = Axis(fig[1, 1], backgroundcolor = RGBf(0.98, 0.98, 0.99))
     axB = Axis(fig[1, 2], backgroundcolor = RGBf(0.98, 0.98, 0.99))
-    axC = Axis(fig[2, 1], backgroundcolor = RGBf(0.98, 0.98, 0.99))
-    axD = Axis(fig[2, 2], backgroundcolor = RGBf(0.98, 0.98, 0.99))
-    axE = Axis(fig[3, 1:2], backgroundcolor = RGBf(0.98, 0.98, 0.99))
+    axC = Axis(fig[1, 3], backgroundcolor = RGBf(0.98, 0.98, 0.99))
+    axE = Axis(fig[2, 1:3], backgroundcolor = RGBf(0.98, 0.98, 0.99))
     plot_circuit_panel!(axA)
     plot_compare_panel!(axB, representative_model_points(traces; detector_kwargs(detector)...); detector = detector, time_scale = time_scale)
     plot_gain_panel!(axC, summary, raw, "pre")
-    plot_gain_panel!(axD, summary, raw, "post")
-    plot_representative_traces!(axE, bio_t1, bio_v1, bio_t2, bio_v2, traces; source = trace_source, show_si3 = show_si3, show_burst_markers = show_burst_markers, detector = detector)
+    plot_representative_traces!(axE, bio_t1, bio_v1, bio_t2, bio_v2, traces; source = trace_source, show_si3 = show_si3, show_burst_markers = show_burst_markers, detector = detector, time_scale = time_scale)
     add_panel_label!(axA, "A")
     add_panel_label!(axB, "B")
     add_panel_label!(axC, "C")
-    add_panel_label!(axD, "D")
-    add_panel_label!(axE, "E")
-    rowsize!(fig.layout, 1, Fixed(235))
-    rowsize!(fig.layout, 2, Fixed(335))
-    rowsize!(fig.layout, 3, Fixed(255))
+    add_panel_label!(axE, "D")
+    rowsize!(fig.layout, 1, Fixed(300))
+    rowsize!(fig.layout, 2, Fixed(560))
     rowgap!(fig.layout, 18)
     colgap!(fig.layout, 16)
     return fig
@@ -576,7 +612,7 @@ function build_dashboard()
     fig = Figure(size = (1980, 1380), backgroundcolor = :white, fontsize = 15)
     controls = GridLayout(fig[1:2, 1], tellwidth = true)
     parameter_controls = GridLayout(fig[1:2, 2], tellwidth = true)
-    plots = GridLayout(fig[1:2, 3:4])
+    plots = GridLayout(fig[1:2, 3:5])
 
     Label(controls[1, 1:2], "Scan Controls"; fontsize = 20, font = :bold, halign = :left)
     cb_presyn_scan = add_labeled_checkbox!(controls, 2, "scan presynaptic"; checked = true)
@@ -596,7 +632,7 @@ function build_dashboard()
 
     Label(controls[8, 1:2], "Trace Controls"; fontsize = 20, font = :bold, halign = :left)
     cb_trace_scan_protocol = add_labeled_checkbox!(controls, 9, "use scan burst protocol"; checked = false)
-    cb_show_si3 = add_labeled_checkbox!(controls, 10, "show Si3 traces"; checked = true)
+    cb_show_si3 = add_labeled_checkbox!(controls, 10, "show Si3 traces"; checked = false)
     cb_show_burst_markers = add_labeled_checkbox!(controls, 11, "show burst onsets"; checked = true)
     sg_timescale = SliderGrid(
         controls[12, 1:2],
@@ -631,26 +667,26 @@ function build_dashboard()
         :postsyn_g0 => (label = "g0 postsyn", range = 0.0:0.0001:0.0100, startvalue = param_defaults_by_key[:postsyn_g0], format = "{:.4f}"),
         :alpha1 => (label = "alpha1", range = 0.001:0.001:0.050, startvalue = param_defaults_by_key[:alpha1], format = "{:.3f}"),
         :beta1 => (label = "beta1", range = 0.0001:0.0001:0.0100, startvalue = param_defaults_by_key[:beta1], format = "{:.4f}"),
-        :s0_floor => (label = "s0 floor", range = 0.01:0.0025:0.5000, startvalue = param_defaults_by_key[:s0_floor], format = "{:.4f}"),
+        :s0_floor => (label = "s0 floor", range = 0.0:0.0001:0.5000, startvalue = param_defaults_by_key[:s0_floor], format = "{:.4f}"),
         :alpham => (label = "alpham", range = 0.0005:0.0005:0.1000, startvalue = param_defaults_by_key[:alpham], format = "{:.4f}"),
         :betam => (label = "betam", range = 0.00005:0.00005:0.00200, startvalue = param_defaults_by_key[:betam], format = "{:.5f}"),
-        :sm_floor => (label = "sm floor", range = 0.01:0.0025:0.5000, startvalue = param_defaults_by_key[:sm_floor], format = "{:.4f}"),
+        :sm_floor => (label = "sm floor", range = 0.0:0.0001:0.5000, startvalue = param_defaults_by_key[:sm_floor], format = "{:.4f}"),
         :ca_shift_si2 => (label = "Ca_shift1/2", range = -120.0:1.0:20.0, startvalue = param_defaults_by_key[:ca_shift_si2], format = "{:.0f}"),
         :ca_shift_si3 => (label = "Ca_shift3/4", range = -120.0:1.0:20.0, startvalue = param_defaults_by_key[:ca_shift_si3], format = "{:.0f}"),
-        :presynaptic_base_g => (label = "presyn g41/g32 base", range = 0.0:0.0001:0.0100, startvalue = param_defaults_by_key[:presynaptic_base_g], format = "{:.4f}"),
-        :direct_post_base_g => (label = "postsyn g41/g32 base", range = 0.0:0.0001:0.0100, startvalue = param_defaults_by_key[:direct_post_base_g], format = "{:.4f}"),
+        :presynaptic_base_g => (label = "presyn g41/g32 base", range = 0.0:0.0001:0.0500, startvalue = param_defaults_by_key[:presynaptic_base_g], format = "{:.4f}"),
+        :direct_post_base_g => (label = "postsyn g41/g32 base", range = 0.0:0.0001:0.0500, startvalue = param_defaults_by_key[:direct_post_base_g], format = "{:.4f}"),
         :presyn_alphax => (label = "presyn alphax", range = 0.001:0.001:0.050, startvalue = param_defaults_by_key[:presyn_alphax], format = "{:.3f}"),
         :postsyn_alphax => (label = "postsyn alphax", range = 0.001:0.001:0.100, startvalue = param_defaults_by_key[:postsyn_alphax], format = "{:.3f}"),
         :presyn_betax => (label = "presyn betax", range = 0.0001:0.0001:0.0100, startvalue = param_defaults_by_key[:presyn_betax], format = "{:.4f}"),
         :postsyn_betax => (label = "postsyn betax", range = 0.0001:0.0001:0.0100, startvalue = param_defaults_by_key[:postsyn_betax], format = "{:.4f}"),
-        :si3_exc_floor => (label = "s3/s4 floor", range = 0.01:0.0025:0.5000, startvalue = param_defaults_by_key[:si3_exc_floor], format = "{:.4f}"),
+        :si3_exc_floor => (label = "s3/s4 floor", range = 0.0:0.0001:0.5000, startvalue = param_defaults_by_key[:si3_exc_floor], format = "{:.4f}"),
         :slow_inhib_g => (label = "g14/g23 slow inhib", range = 0.0:0.0001:0.0300, startvalue = param_defaults_by_key[:slow_inhib_g], format = "{:.4f}"),
         :slow_inhib_alpha => (label = "alphai", range = 0.001:0.001:0.050, startvalue = param_defaults_by_key[:slow_inhib_alpha], format = "{:.3f}"),
         :slow_inhib_beta => (label = "betai", range = 0.0001:0.0001:0.0200, startvalue = param_defaults_by_key[:slow_inhib_beta], format = "{:.4f}"),
         :si2_mutual_inhib_g => (label = "Si2 mutual inhib g", range = 0.0:0.0001:0.0300, startvalue = param_defaults_by_key[:si2_mutual_inhib_g], format = "{:.4f}"),
         :si2_mutual_inhib_alpha => (label = "Si2 mutual inhib alpha", range = 0.001:0.001:0.050, startvalue = param_defaults_by_key[:si2_mutual_inhib_alpha], format = "{:.3f}"),
         :si2_mutual_inhib_beta => (label = "Si2 mutual inhib beta", range = 0.0001:0.0001:0.0200, startvalue = param_defaults_by_key[:si2_mutual_inhib_beta], format = "{:.4f}"),
-        :si_inhib_floor => (label = "s1/s2 floor", range = 0.01:0.0025:0.5000, startvalue = param_defaults_by_key[:si_inhib_floor], format = "{:.4f}"),
+        :si_inhib_floor => (label = "s1/s2 floor", range = 0.0:0.0001:0.5000, startvalue = param_defaults_by_key[:si_inhib_floor], format = "{:.4f}"),
         :si3_mutual_inhib_g => (label = "Si3 mutual inhib g", range = 0.0:0.0001:0.0300, startvalue = param_defaults_by_key[:si3_mutual_inhib_g], format = "{:.4f}"),
         :si3_mutual_inhib_alpha => (label = "Si3 mutual inhib alpha", range = 0.001:0.001:0.050, startvalue = param_defaults_by_key[:si3_mutual_inhib_alpha], format = "{:.3f}"),
         :si3_mutual_inhib_beta => (label = "Si3 mutual inhib beta", range = 0.0001:0.0001:0.0200, startvalue = param_defaults_by_key[:si3_mutual_inhib_beta], format = "{:.4f}"),
@@ -690,17 +726,13 @@ function build_dashboard()
 
     axA = Axis(plots[1, 1], backgroundcolor = RGBf(0.98, 0.98, 0.99))
     plot_circuit_panel!(axA)
-    axB = Axis(plots[1, 2], title = "Si1 Rate vs Burst Rate", xlabel = "Si1 spike freq (Hz)", ylabel = "Burst freq (Hz)", backgroundcolor = RGBf(0.98, 0.98, 0.99))
+    axB = Axis(plots[1, 2], title = "Si1 Rate vs Burst Rate", xlabel = "Si1 spike rate (spikes/s)", ylabel = "Burst freq (Hz)", backgroundcolor = RGBf(0.98, 0.98, 0.99))
     bio_x = lift(points -> finite_cols(points, :si1_frequency_hz, :burst_frequency_hz)[1], bio_points_obs)
     bio_y = lift(points -> finite_cols(points, :si1_frequency_hz, :burst_frequency_hz)[2], bio_points_obs)
-    scatter!(axB, safe_x(lit_x_obs, lit_y_obs), safe_y(lit_x_obs, lit_y_obs); color = LITERATURE_GREY, marker = :circle, markersize = 10, strokecolor = :black, strokewidth = 0.8)
-    scatter!(axB, safe_x(bio_x, bio_y), safe_y(bio_x, bio_y); color = :black, marker = :utriangle, markersize = 10, strokecolor = :white, strokewidth = 0.8)
     trend_y_observables = Observable{Vector{Float64}}[]
     for mode_name in MODE_LABELS
         trend_y = trend_y_obs(point_obs[(mode_name, :x)], point_obs[(mode_name, :y)])
         push!(trend_y_observables, trend_y)
-        scatter!(axB, safe_x(point_obs[(mode_name, :x)], point_obs[(mode_name, :y)]), safe_y(point_obs[(mode_name, :x)], point_obs[(mode_name, :y)]);
-            color = (DASH_COLORS[mode_name], 0.84), marker = DASH_MARKERS[mode_name], markersize = 10, strokecolor = :black, strokewidth = 0.8)
     end
     lines!(axB, trend_x_obs(lit_x_obs, lit_y_obs), trend_y_obs(lit_x_obs, lit_y_obs); color = LITERATURE_GREY, linewidth = 3.0)
     bio_trend_x = trend_x_obs(bio_x, bio_y)
@@ -711,23 +743,35 @@ function build_dashboard()
         trend_y = trend_y_observables[i]
         lines!(axB, trend_x, trend_y; color = DASH_COLORS[mode_name], linewidth = 4.0)
     end
-    xlims!(axB, 0, 6.5)
-    function refresh_compare_ylim!()
-        ylims!(axB, 0, compare_panel_ylimit(model_points_obs[], bio_points_obs[]))
+    scatter!(axB, safe_x(lit_x_obs, lit_y_obs), safe_y(lit_x_obs, lit_y_obs); color = LITERATURE_GREY, marker = :circle, markersize = 10, strokecolor = :black, strokewidth = 0.8)
+    scatter!(axB, safe_x(bio_x, bio_y), safe_y(bio_x, bio_y); color = :black, marker = :utriangle, markersize = 10, strokecolor = :white, strokewidth = 0.8)
+    for mode_name in MODE_LABELS
+        scatter!(axB, safe_x(point_obs[(mode_name, :x)], point_obs[(mode_name, :y)]), safe_y(point_obs[(mode_name, :x)], point_obs[(mode_name, :y)]);
+            color = (DASH_COLORS[mode_name], 0.84), marker = DASH_MARKERS[mode_name], markersize = 10, strokecolor = :black, strokewidth = 0.8)
+    end
+    function refresh_compare_limits!()
+        x0, x1, y0, y1 = compare_panel_limits(lit_x_obs[], lit_y_obs[], model_points_obs[], bio_points_obs[])
+        xlims!(axB, x0, x1)
+        ylims!(axB, y0, y1)
     end
     on(model_points_obs) do _
-        refresh_compare_ylim!()
+        refresh_compare_limits!()
     end
     on(bio_points_obs) do _
-        refresh_compare_ylim!()
+        refresh_compare_limits!()
     end
-    refresh_compare_ylim!()
+    on(lit_x_obs) do _
+        refresh_compare_limits!()
+    end
+    on(lit_y_obs) do _
+        refresh_compare_limits!()
+    end
+    refresh_compare_limits!()
     hidespines!(axB, :t, :r)
     add_panel_label!(axA, "A")
     add_panel_label!(axB, "B")
 
-    axC = Axis(plots[2, 1], title = "During Drive", xlabel = "Gain", ylabel = "Freq on (Hz)", backgroundcolor = RGBf(0.98, 0.98, 0.99))
-    axD = Axis(plots[2, 2], title = "After Drive Removal", xlabel = "Gain", ylabel = "Freq off (Hz)", backgroundcolor = RGBf(0.98, 0.98, 0.99))
+    axC = Axis(plots[1, 3], title = "During Drive", xlabel = "Gain", ylabel = "Freq on (Hz)", backgroundcolor = RGBf(0.98, 0.98, 0.99))
     pick_targets = IdDict{Any, Tuple{String, Symbol}}()
     for mode_name in MODE_LABELS
         color = DASH_COLORS[mode_name]
@@ -735,24 +779,16 @@ function build_dashboard()
         scatter!(axC, safe_x(plot_obs[(mode_name, :on_raw_x)], plot_obs[(mode_name, :on_raw_y)]), safe_y(plot_obs[(mode_name, :on_raw_x)], plot_obs[(mode_name, :on_raw_y)]); color = (color, 0.20), markersize = 6, strokewidth = 0)
         sc_on = scatter!(axC, safe_x(plot_obs[(mode_name, :on_summary_x)], plot_obs[(mode_name, :on_summary_y)]), safe_y(plot_obs[(mode_name, :on_summary_x)], plot_obs[(mode_name, :on_summary_y)]); color = color, marker = marker, markersize = 11, strokecolor = :black, strokewidth = 0.8)
         pick_targets[sc_on] = (mode_name, :mean_pre_frequency_hz)
-        scatter!(axD, safe_x(plot_obs[(mode_name, :off_raw_x)], plot_obs[(mode_name, :off_raw_y)]), safe_y(plot_obs[(mode_name, :off_raw_x)], plot_obs[(mode_name, :off_raw_y)]); color = (color, 0.20), markersize = 6, strokewidth = 0)
-        sc_off = scatter!(axD, safe_x(plot_obs[(mode_name, :off_summary_x)], plot_obs[(mode_name, :off_summary_y)]), safe_y(plot_obs[(mode_name, :off_summary_x)], plot_obs[(mode_name, :off_summary_y)]); color = color, marker = marker, markersize = 11, strokecolor = :black, strokewidth = 0.8)
-        pick_targets[sc_off] = (mode_name, :mean_post_frequency_hz)
     end
     selected_on_x = lift((summary, selected) -> selected_gain_vectors(summary, selected, :mean_pre_frequency_hz)[1], summary_obs, selected_obs)
     selected_on_y = lift((summary, selected) -> selected_gain_vectors(summary, selected, :mean_pre_frequency_hz)[2], summary_obs, selected_obs)
-    selected_off_x = lift((summary, selected) -> selected_gain_vectors(summary, selected, :mean_post_frequency_hz)[1], summary_obs, selected_obs)
-    selected_off_y = lift((summary, selected) -> selected_gain_vectors(summary, selected, :mean_post_frequency_hz)[2], summary_obs, selected_obs)
     scatter!(axC, safe_x(selected_on_x, selected_on_y), safe_y(selected_on_x, selected_on_y); color = RGBf(1.0, 0.78, 0.08), marker = :star5, markersize = 22, strokecolor = :black, strokewidth = 1.0)
-    scatter!(axD, safe_x(selected_off_x, selected_off_y), safe_y(selected_off_x, selected_off_y); color = RGBf(1.0, 0.78, 0.08), marker = :star5, markersize = 22, strokecolor = :black, strokewidth = 1.0)
-    for ax in (axC, axD)
-        xlims!(ax, 0, 8)
-        ylims!(ax, ax === axD ? -0.005 : 0.0, 0.22)
-    end
+    xlims!(axC, 0, 8)
+    ylims!(axC, 0.0, 0.22)
+    hidespines!(axC, :t, :r)
     add_panel_label!(axC, "C")
-    add_panel_label!(axD, "D")
 
-    axE = Axis(plots[3, 1:2], backgroundcolor = RGBf(0.98, 0.98, 0.99))
+    axE = Axis(plots[2, 1:3], backgroundcolor = RGBf(0.98, 0.98, 0.99))
     offsets = trace_offsets()
     scan_protocol_visible = cb_trace_scan_protocol.checked
     empirical_protocol_visible = lift(x -> !x, scan_protocol_visible)
@@ -761,11 +797,8 @@ function build_dashboard()
     bio_si2_y = lift(v -> Float64.(v) .+ offsets["si2"], bio_v2_obs)
     lines!(axE, bio_t1_obs, bio_si1_y; color = RGBf(0.35, 0.35, 0.35), linewidth = 1.4, visible = empirical_protocol_visible)
     lines!(axE, bio_t2_obs, bio_si2_y; color = RGBf(0.1, 0.1, 0.1), linewidth = 1.4, visible = empirical_protocol_visible)
-    bio_tick_x = lift((t, v, d) -> burst_tick_vectors(t, v, offsets["si2"]; detector_kwargs(d)...)[1], bio_t2_obs, bio_v2_obs, detector_obs)
-    bio_tick_y = lift((t, v, d) -> burst_tick_vectors(t, v, offsets["si2"]; detector_kwargs(d)...)[2], bio_t2_obs, bio_v2_obs, detector_obs)
     bio_marker_x = lift((t, v, d) -> burst_marker_vectors(t, v, offsets["si2"]; detector_kwargs(d)...)[1], bio_t2_obs, bio_v2_obs, detector_obs)
     bio_marker_y = lift((t, v, d) -> burst_marker_vectors(t, v, offsets["si2"]; detector_kwargs(d)...)[2], bio_t2_obs, bio_v2_obs, detector_obs)
-    lines!(axE, bio_tick_x, bio_tick_y; color = (:black, 0.28), linewidth = 1.0, visible = empirical_burst_markers_visible)
     scatter!(axE, bio_marker_x, bio_marker_y; color = :black, marker = :utriangle, markersize = 10, strokecolor = :white, strokewidth = 0.8, visible = empirical_burst_markers_visible)
     pre_drive_x = lift((t, v) -> matched_trace_vectors(t, v, offsets["si1"])[1], trace_obs[("presynaptic", :time)], trace_obs[("presynaptic", :V0)])
     pre_drive_y = lift((t, v) -> matched_trace_vectors(t, v, offsets["si1"])[2], trace_obs[("presynaptic", :time)], trace_obs[("presynaptic", :V0)])
@@ -788,7 +821,7 @@ function build_dashboard()
     lines!(axE, pre_drive_x, pre_drive_y; color = RGBf(0.35, 0.35, 0.35), linewidth = 1.4, visible = scan_protocol_visible)
     lines!(axE, pre_si2_x, pre_si2_y; color = DASH_COLORS["presynaptic"], linewidth = 1.4)
     lines!(axE, post_si2_x, post_si2_y; color = DASH_COLORS["postsynaptic"], linewidth = 1.4)
-    lines!(axE, shared_sm_x, shared_sm_y; color = RGBf(0.45, 0.24, 0.62), linewidth = 1.1)
+    lines!(axE, shared_sm_x, shared_sm_y; color = RGBf(0.45, 0.24, 0.62), linewidth = 1.8)
     lines!(axE, pre_si3_x, pre_si3_y; color = DASH_COLORS["presynaptic"], linewidth = 1.4, visible = cb_show_si3.checked)
     lines!(axE, post_si3_x, post_si3_y; color = DASH_COLORS["postsynaptic"], linewidth = 1.4, visible = cb_show_si3.checked)
     for mode_name in MODE_LABELS
@@ -796,23 +829,22 @@ function build_dashboard()
         for (signal, offset_key, visible) in ((:V1, mode_name, cb_show_burst_markers.checked), (:V3, "$(mode_name)_si3", si3_burst_markers_visible))
             time_obs = trace_obs[(mode_name, :time)]
             voltage_obs = trace_obs[(mode_name, signal)]
-            tick_x = lift((t, v, d) -> burst_tick_vectors(t, v, offsets[offset_key]; detector_kwargs(d)...)[1], time_obs, voltage_obs, detector_obs)
-            tick_y = lift((t, v, d) -> burst_tick_vectors(t, v, offsets[offset_key]; detector_kwargs(d)...)[2], time_obs, voltage_obs, detector_obs)
             marker_x = lift((t, v, d) -> burst_marker_vectors(t, v, offsets[offset_key]; detector_kwargs(d)...)[1], time_obs, voltage_obs, detector_obs)
             marker_y = lift((t, v, d) -> burst_marker_vectors(t, v, offsets[offset_key]; detector_kwargs(d)...)[2], time_obs, voltage_obs, detector_obs)
-            lines!(axE, tick_x, tick_y; color = (DASH_COLORS[mode_name], 0.28), linewidth = 1.0, visible = visible)
             scatter!(axE, marker_x, marker_y; color = DASH_COLORS[mode_name], marker = DASH_MARKERS[mode_name], markersize = 10, strokecolor = :black, strokewidth = 0.8, visible = visible)
         end
     end
     x_min, x_max, y_min, y_max = trace_panel_limits(bio_t1_obs[], bio_v1_obs[], bio_t2_obs[], bio_v2_obs[], traces_obs[]; show_si3 = cb_show_si3.checked[])
-    label_x = x_min + 0.045 * (x_max - x_min)
-    text!(axE, label_x, offsets["si1"] + 38; text = "Si1 biology", align = (:left, :center), fontsize = 15, color = RGBf(0.35, 0.35, 0.35), visible = empirical_protocol_visible)
-    text!(axE, label_x, offsets["si2"] + 38; text = "Si2 biology", align = (:left, :center), fontsize = 15, color = RGBf(0.1, 0.1, 0.1), visible = empirical_protocol_visible)
-    text!(axE, label_x, offsets["si1"] + 38; text = "Si1 scan protocol", align = (:left, :center), fontsize = 15, color = RGBf(0.35, 0.35, 0.35), visible = scan_protocol_visible)
-    text!(axE, label_x, offsets["presynaptic"] + 38; text = "Si2 presynaptic", align = (:left, :center), fontsize = 15, color = DASH_COLORS["presynaptic"])
+    label_x = x_min + 0.002 * (x_max - x_min)
+    presyn_label_x = x_min + 0.010 * (x_max - x_min)
+    postsyn_label_x = x_min + 0.0162 * (x_max - x_min)
+    text!(axE, label_x, offsets["si1"] + 11; text = "Si1 biology", align = (:left, :center), fontsize = 15, color = RGBf(0.35, 0.35, 0.35), visible = empirical_protocol_visible)
+    text!(axE, label_x, offsets["si2"] + 11; text = "Si2 biology", align = (:left, :center), fontsize = 15, color = RGBf(0.1, 0.1, 0.1), visible = empirical_protocol_visible)
+    text!(axE, label_x, offsets["si1"] + 26; text = "Si1 scan protocol", align = (:left, :center), fontsize = 15, color = RGBf(0.35, 0.35, 0.35), visible = scan_protocol_visible)
+    text!(axE, presyn_label_x, offsets["presynaptic"] + 8; text = "Si2 presynaptic", align = (:left, :center), fontsize = 15, color = DASH_COLORS["presynaptic"])
     text!(axE, label_x, offsets["presynaptic_si3"] + 38; text = "Si3 presynaptic", align = (:left, :center), fontsize = 15, color = DASH_COLORS["presynaptic"], visible = cb_show_si3.checked)
-    text!(axE, label_x, offsets["postsynaptic"] + 38; text = "Si2 postsynaptic", align = (:left, :center), fontsize = 15, color = DASH_COLORS["postsynaptic"])
-    text!(axE, label_x, shared_neuromod_offset(offsets) + 22; text = "sm neuromodulation", align = (:left, :center), fontsize = 12, color = RGBf(0.45, 0.24, 0.62))
+    text!(axE, postsyn_label_x, offsets["postsynaptic"] + 11; text = "Si2 postsynaptic", align = (:left, :center), fontsize = 15, color = DASH_COLORS["postsynaptic"])
+    text!(axE, label_x, shared_neuromod_offset(offsets) + 15; text = "sm neuromodulation", align = (:left, :center), fontsize = 15, color = RGBf(0.45, 0.24, 0.62))
     text!(axE, label_x, offsets["postsynaptic_si3"] + 38; text = "Si3 postsynaptic", align = (:left, :center), fontsize = 15, color = DASH_COLORS["postsynaptic"], visible = cb_show_si3.checked)
     trace_panel_title(source, selected, calcium_ics) = begin
         gain = round(selected[2], digits = 3)
@@ -828,9 +860,9 @@ function build_dashboard()
     axE.xgridvisible = false
     axE.ygridvisible = false
     hidespines!(axE, :t, :r)
-    add_l_scale_bar!(axE, x_min, x_max, y_min, y_max)
+    add_l_scale_bar!(axE, x_min, x_max, y_min, y_max; display_time_scale = trace_time_scale_obs[])
     reset_trace_limits!(axE, bio_t1_obs[], bio_v1_obs[], bio_t2_obs[], bio_v2_obs[], traces_obs[]; show_si3 = cb_show_si3.checked[])
-    add_panel_label!(axE, "E")
+    add_panel_label!(axE, "D")
 
     param_value(key::Symbol) = Float64(sg_params.by_key[key].value[])
     function current_param_values(mode::ControlMode)
@@ -1143,11 +1175,22 @@ function build_dashboard()
         status_obs[] = "Saved parameter defaults to $(path)"
     end
     on(save_button.clicks) do _
-        trace_source = current_trace_source() == :scan_protocol ? :scan_protocol : :representative
-        clean = build_clean_figure(summary_obs[], raw_obs[], traces_obs[]; trace_source = trace_source, show_si3 = cb_show_si3.checked[], show_burst_markers = cb_show_burst_markers.checked[], detector = current_burst_detector(), time_scale = current_trace_time_scale())
-        mkpath(DASHBOARD_OUTPUT_DIR)
-        CairoMakie.save(DASHBOARD_CLEAN_PNG, clean)
-        status_obs[] = "Saved $(DASHBOARD_CLEAN_PNG)"
+        try
+            trace_source = current_trace_source() == :scan_protocol ? :scan_protocol : :representative
+            clean = build_clean_figure(summary_obs[], raw_obs[], traces_obs[];
+                trace_source = trace_source,
+                show_si3 = cb_show_si3.checked[],
+                show_burst_markers = cb_show_burst_markers.checked[],
+                detector = current_burst_detector(),
+                time_scale = current_trace_time_scale())
+            mkpath(DASHBOARD_OUTPUT_DIR)
+            CairoMakie.save(DASHBOARD_CLEAN_PNG, clean)
+            status_obs[] = "Saved $(DASHBOARD_CLEAN_PNG)"
+        catch err
+            message = sprint(showerror, err)
+            status_obs[] = "Save failed: $(message)"
+            @error "Clean PNG save failed" exception = (err, catch_backtrace())
+        end
     end
     on(write_csv_button.clicks) do _
         mkpath(DASHBOARD_OUTPUT_DIR)
@@ -1228,9 +1271,8 @@ function build_dashboard()
 
     colsize!(fig.layout, 1, Fixed(360))
     colsize!(fig.layout, 2, Fixed(410))
-    rowsize!(plots, 1, Fixed(240))
-    rowsize!(plots, 2, Fixed(330))
-    rowsize!(plots, 3, Fixed(560))
+    rowsize!(plots, 1, Fixed(325))
+    rowsize!(plots, 2, Fixed(775))
     rowgap!(fig.layout, 14)
     colgap!(fig.layout, 14)
 
@@ -1266,7 +1308,7 @@ function build_dashboard()
             save = save_button,
             write_csv = write_csv_button,
         ),
-        axes = (circuit = axA, compare = axB, during = axC, after = axD, traces = axE),
+        axes = (circuit = axA, compare = axB, during = axC, traces = axE),
         actions = (
             run_scan! = run_selected_scan!,
             run_trace! = run_selected_trace!,

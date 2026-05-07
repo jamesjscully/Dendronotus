@@ -196,7 +196,7 @@ function detect_bursts_from_trace_spikes(time_s::AbstractVector{<:Real}, voltage
     return starts, ends
 end
 
-function matched_si1_vs_si2_points(trace::DataFrame; spike_threshold_mv::Float64 = -20.0, spike_refractory_s::Float64 = 0.02, burst_factor::Float64 = 2.0)
+function matched_si1_vs_si2_points(trace::DataFrame; spike_threshold_mv::Float64 = -20.0, spike_refractory_s::Float64 = 0.02, burst_factor::Float64 = 2.0, skip_initial_isis::Int = 3)
     time_s = trace[!, :time_s]
     v0 = trace[!, :V0]
     v1 = trace[!, :V1]
@@ -211,20 +211,20 @@ function matched_si1_vs_si2_points(trace::DataFrame; spike_threshold_mv::Float64
         return DataFrame(mode = String[], si1_frequency_hz = Float64[], burst_frequency_hz = Float64[])
     end
 
-    spike_freq = 1.0 ./ diff(spike_times)
-    spike_freq_times = spike_times[2:end]
     burst_freq = 1.0 ./ diff(burst_times)
 
     si1_at_bursts = Float64[]
-    for bt in burst_times[2:end]
-        idx = argmin(abs.(spike_freq_times .- bt))
-        push!(si1_at_bursts, spike_freq[idx])
+    for (t_start, t_stop) in zip(burst_times[1:end-1], burst_times[2:end])
+        n_spikes = count(t -> t_start <= t < t_stop, spike_times)
+        push!(si1_at_bursts, n_spikes / max(t_stop - t_start, eps()))
     end
+    keep = (max(skip_initial_isis, 0) + 1):length(burst_freq)
+    isempty(keep) && return DataFrame(mode = String[], si1_frequency_hz = Float64[], burst_frequency_hz = Float64[])
 
     return DataFrame(
-        mode = fill(String(trace[1, :mode]), length(burst_freq)),
-        si1_frequency_hz = si1_at_bursts,
-        burst_frequency_hz = burst_freq,
+        mode = fill(String(trace[1, :mode]), length(keep)),
+        si1_frequency_hz = si1_at_bursts[keep],
+        burst_frequency_hz = burst_freq[keep],
     )
 end
 

@@ -55,14 +55,18 @@ Each panel shows model traces (top) alongside corresponding experimental recordi
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{fig5.jpg}
-\caption{{\bf Top-down control: Si1 neurons gate network activity and modulate burst frequency.}
+\caption{{\bf Si1-dependent burst-frequency control is better matched by presynaptic modulation than by postsynaptic conductance scaling.}
 (A) Schematic of the five-cell swim circuit highlighting direct Si1 excitation of Si3 neurons and activity-dependent modulation of the Si3$\to$Si2 excitatory pathway.
-(B) Experimental recording from preparation 130618-03 showing a representative Si1/Si2 burst episode.
-(C) Representative model trace from the presynaptic modulation regime showing the corresponding Si1-driven recruitment of Si2 bursting.
-(D--E) Neuromodulatory burst frequency control. During drive, presynaptic modulation of the logistic Si3$\to$Si2 accumulation-rate parameter $\alpha$ produces smooth, graded changes in burst frequency, whereas postsynaptic modulation of the maximal conductance produces a steeper, more sensitive response.
-After drive removal, presynaptic modulation shuts the rhythm off, whereas postsynaptic modulation tends to sustain residual bursting.
-(F) Biological Fig.~2C data from Sakurai \& Katz (2019) compared with matched model measurements of Si1/V0 spike frequency versus Si2 burst frequency.
-The presynaptic model spans the biologically relevant range more naturally than the postsynaptic model, while also retaining clean termination after drive withdrawal.}
+(B) Relationship between Si1 spike rate and burst frequency.
+Grey circles and grey fit line show digitized points from the published biological summary, black triangles and black fit line show measurements extracted directly from the representative biological Si1/Si2 trace pair, and blue circles and red squares show matched model measurements from representative presynaptic and postsynaptic simulations, respectively.
+(C) Gain scan during sustained drive.
+Presynaptic modulation of the logistic Si3$\to$Si2 accumulation-rate parameter $\alpha$ produces a broader, smoother increase in burst frequency, whereas postsynaptic modulation of effective synaptic conductance occupies a narrower band of frequencies over the same scan.
+Faint points show individual measured intervals; saturated markers show gain-wise means.
+(E) Representative biological and model traces.
+Top two traces show the biological Si1 and Si2 recordings.
+Blue and red traces show the corresponding Si2 activity produced by presynaptic and postsynaptic model variants under the same Si1 drive, and the purple trace shows the shared modulatory variable $s_m$.
+Triangles, circles, and squares mark detected burst onsets from the biological, presynaptic, and postsynaptic traces, respectively, and these onset-to-onset intervals are the measurements used for the rate-matching analysis in panel B.
+The scale bar in panel E denotes 20~s and 50~mV.}
 \label{fig:si1_neuromod}
 \end{figure}
 
