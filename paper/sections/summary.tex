@@ -1,17 +1,19 @@
 \section*{SUMMARY}
 
-Rhythmic behaviors, like swimming, rely on Central Pattern Generators (CPGs) that must be both robust and resilient to perturbation and tunable by descending commands.
-Early work established that some CPGs act as ``network oscillators'' -- {\bf collectively generating emergent rhythm} through synaptic interactions rather than due to {\bf dedicated} cellular pacemakers alone \cite{Getting1983delayed, Getting1989}.
-While pacemaker-driven and {\bf [bistable] half-center oscillators??} have been extensively studied, the mechanisms enabling \textit{smooth and broad frequency control} in network oscillators remain less well characterized.
+Rhythmic behaviors such as swimming rely on central pattern generators (CPGs) that must be robust to perturbation yet tunable by descending commands.
+Early work showed that some CPGs function as ``network oscillators,'' generating rhythm through synaptic interactions rather than through dedicated intrinsic pacemaker neurons alone \cite{Getting1983delayed, Getting1989}.
+Although pacemaker-driven and half-center mechanisms have been extensively studied, the principles by which network oscillators achieve graded frequency control remain less well characterized.
 
-We address this question through computational modeling of the swim CPG of the nudibranch \textit{Dendronotus iris}, a four-cell circuit controlled by Si1 command neurons.
-We identify contralateral excitatory-inhibitory (E/I) modules as the core {\em rhythmogenic} engine {\bf symmetrically built-in the swim CPG}.
+We address this question through computational modeling of the swim CPG of the nudibranch \textit{Dendronotus iris}, a four-neuron core circuit controlled by Si1 command neurons.
+We identify contralateral excitatory-inhibitory (E/I) modules as the central rhythmogenic element of the circuit.
+These modules operate in an ``almost-oscillatory'' regime in which slow synaptic accumulation creates the history dependence required for network-level state transitions, a mechanism we term \textit{network hysteresis}.
 
-These modules operate in an ``almost-oscillatory'' {\bf [love it or on the oscillatory edge]} regime where rhythm emerges through network-level hysteresis: slow synaptic accumulation creates the history-dependence in post-synaptic neurons giving rise to  bistability and oscillations in E/I modules and the whole CPG. 
+Progressive network assembly shows that these E/I modules, together with reciprocal inhibition between the left and right Si2 and Si3 interneuron pairs, are sufficient to generate robust alternating bursting.
+The model reproduces experimental perturbation responses without parameter fitting, supporting the interpretation that rhythm generation is distributed across the circuit rather than localized to a single essential pacemaker neuron.
 
-Progressive network assembly reveals that E/I modules, combined/enhanced with two half-center-oscillators between left/right constituent interneurons [Si2s and Si3s] bonded by reciprocal inhibition, constitute the circuit capable for emergent and resilient rhythm generation.
+We further show that gain-dependent modulation of the Si3$\to$Si2 excitatory pathway can tune burst frequency during active drive.
+Using the same dimensionless gain parameter in two model variants, we compare presynaptic modulation of synaptic accumulation kinetics with postsynaptic modulation of effective synaptic conductance.
+Both implementations provide plausible mechanisms for Si1-linked frequency control while producing different gain-to-frequency relationships.
 
-Its theoretical/mathematical model reproduces experimental perturbation responses without parameter fitting, confirming its distributed robustness or behavioral stability.
-We further demonstrate that presynaptic modulation of transmitter release rate enables smooth 
-network frequency control, whereas postsynaptic conductance modulation yields threshold-like transitions.
-These findings provide a mechanistic account of how network oscillators achieve the {\bf graded}frequency control long observed in motor systems.
+These findings provide a mechanistic account of how network oscillators can combine resilience with controllability.
+More broadly, they suggest that slow synaptic dynamics can serve as the primary substrate for flexible motor-pattern regulation in circuits that lack intrinsic bursting neurons.

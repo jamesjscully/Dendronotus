@@ -2,7 +2,7 @@
 
 Our findings demonstrate that slow synaptic dynamics play a central role in generating robust, adaptable rhythms in the \textit{Dendronotus iris} swim CPG.
 Previous work established that synaptic properties shape CPG output \cite{Manor1997, NadimBucher2014}, but these studies examined circuits containing intrinsically bursting neurons or focused on synaptic amplitude rather than temporal dynamics.
-The present work addresses a distinct question: in circuits lacking intrinsic pacemakers, how do slow synaptic kinetics regulate rhythmic output and enable smooth frequency control?
+The present work addresses a distinct question: in circuits lacking intrinsic pacemakers, how do slow synaptic kinetics regulate rhythmic output and enable graded frequency control?
 
 \subsection*{Reconnecting with early insights on network oscillators}
 
@@ -15,13 +15,14 @@ Our quantitative analysis of the Dendronotus circuit suggests that slow synaptic
 We introduce the term ``network hysteresis'' to connect Getting's ``delayed excitation'' to the hysteresis framework commonly applied to cellular bistability: just as slow intrinsic variables create history-dependence in bursting neurons, slow synaptic accumulation creates history-dependence at the network level.
 This terminology provides a unifying concept linking synaptic and cellular mechanisms within a common dynamical framework.
 
-\subsection*{Presynaptic modulation provides smooth frequency control}
+\subsection*{Neuromodulation of the Si3$\to$Si2 pathway provides frequency control}
 
-Presynaptic modulation of the accumulation rate parameter $\alpha$ in the logistic Si3$\to$Si2 excitatory synapses produces a broader, smoother control of burst frequency during sustained drive (Fig.~\ref{fig:si1_neuromod}C), whereas postsynaptic modulation of $g_{syn}$ in the same synapses occupies a narrower and less graded response band.
-From a control-theoretic perspective, presynaptic modulation creates a more favorable landscape: small changes in neuromodulatory input produce proportional changes in network output.
+The neuromodulation analysis in Fig.~\ref{fig:si1_neuromod} shows that burst frequency can be regulated during sustained drive by modulating the Si3$\to$Si2 excitatory pathway.
+Using the same dimensionless gain parameter $g_m$, we compared two loci for that modulation: presynaptic scaling of the logistic accumulation-rate parameter $\alpha$ and postsynaptic scaling of effective synaptic conductance.
+Both mechanisms alter burst frequency across the gain scan, but they do so with different gain-to-frequency relationships.
 
 This distinction builds on Skinner, Kopell, and Marder's (1994) analysis showing that oscillation mechanisms relying on intrinsic cellular properties render frequency insensitive to synaptic parameters, while mechanisms relying on synaptic dynamics render frequency sensitive to those parameters \cite{SKM94}.
-Our results extend this principle: in network oscillators lacking cellular pacemakers, frequency control naturally operates through synaptic mechanisms, and the \textit{kinetics} of transmission---not merely its strength---determine whether control is smooth or threshold-like.
+Our results extend this principle: in network oscillators lacking cellular pacemakers, frequency control naturally operates through synaptic mechanisms, and the \textit{kinetics} of transmission can materially influence how modulatory gain is translated into network output.
 
 Biologically, presynaptic modulation can be achieved through regulation of vesicle priming, calcium sensitivity, and release probability \cite{NeherBrose2018, jackman2017mechanisms}.
 Activity-dependent modulation of release kinetics is well established in the related nudibranch \textit{Tritonia diomedea}, where serotonergic swim interneurons facilitate synaptic transmission through spike timing-dependent mechanisms \cite{katz1994dynamic, sakurai2003spike}.
@@ -30,7 +31,7 @@ That independent computational modeling of \textit{Dendronotus} predicts a simil
 Comparative studies across nudibranch species with different body sizes, swim frequencies, and ecological niches could reveal whether facilitation parameters scale systematically with morphology or behavior.
 Such scaling would support the hypothesis that synaptic timescales represent a primary target for evolutionary tuning of motor output.
 
-Our model generates testable predictions: pharmacological agents that enhance or reduce release probability should produce smooth, graded changes in swim frequency, whereas agents targeting postsynaptic conductance should produce more abrupt transitions.
+Our model therefore motivates experiments that distinguish where Si1-linked modulation acts within the excitatory pathway, rather than supporting a strong claim that one locus is already established as the better biological explanation.
 
 \subsection*{Network hysteresis and the functional properties of network oscillators}
 
@@ -51,14 +52,14 @@ This observation supports the interpretation that multiple synaptic routes can s
 A distinct property is adaptability: the capacity to adjust output frequency in response to modulatory signals.
 Skinner, Kopell, and Marder (1994) showed that when phase transitions depend on intrinsic cellular mechanisms (escape or release from cellular bistability), network frequency is relatively insensitive to synaptic parameters; when transitions depend on synaptic mechanisms, frequency becomes tunable through those parameters \cite{SKM94}.
 Because network hysteresis locates the slow variable in synaptic dynamics rather than cellular currents, frequency control naturally operates through synaptic modulation.
-Our results confirm this: presynaptic modulation of release kinetics produces smoother, more graded frequency changes during ongoing drive (Fig.~\ref{fig:si1_neuromod}C), whereas postsynaptic conductance modulation is less effective at spanning the biological control range summarized in Fig.~\ref{fig:si1_neuromod}B.
+Our results are consistent with this view: modulating the Si3$\to$Si2 pathway changes burst frequency during ongoing drive, and the detailed mapping from modulatory gain to burst output depends on whether gain acts on synaptic kinetics or conductance (Fig.~\ref{fig:si1_neuromod}B,C).
 The absence of cellular bistability thus enables controllability---frequency can be tuned through a single synaptic parameter without requiring coordinated changes across multiple intrinsic conductances.
 
 These observations suggest a relationship between network hysteresis and functional circuit properties.
 Emergent oscillations arise because slow synaptic accumulation creates the history-dependence required for state transitions in circuits lacking cellular pacemakers.
 Local stability of the limit cycle ensures that transient perturbations do not permanently disrupt rhythm.
 Degeneracy arises because rhythm generation depends on collective synaptic interactions that can be achieved through multiple parameter combinations.
-Adaptability arises because the synaptic locus of the slow dynamics places frequency control within reach of neuromodulatory systems that target presynaptic release machinery \cite{NadimBucher2014}.
+Adaptability arises because the synaptic locus of the slow dynamics places frequency control within reach of neuromodulatory systems that target synaptic transmission \cite{NadimBucher2014}.
 
 The ``almost-oscillatory'' design principle may also facilitate developmental adaptation.
 As animals grow, swim frequency must decrease to match the longer body wavelengths required for efficient locomotion.
@@ -69,13 +70,13 @@ Tracking synaptic kinetics alongside body size during \textit{Dendronotus} devel
 \subsection*{Broader implications}
 
 Rhythmic motor patterns must be continuously adjusted to meet changing demands while maintaining coordination.
-Slow synaptic kinetics provide an ideal substrate for such regulation: their extended timescales create a temporal buffer that smooths the translation of modulatory signals into network output, preventing abrupt transitions that could destabilize coordinated movement.
+Slow synaptic kinetics provide an effective substrate for such regulation: their extended timescales create a temporal buffer that shapes the translation of modulatory signals into network output while preserving coordinated movement.
 
 This principle likely extends beyond invertebrate circuits.
 Mammalian locomotor CPGs must vary walking speed smoothly from slow ambling to rapid running while maintaining interlimb coordination, and gait transitions must occur without loss of phase relationships \cite{Kiehn2006}.
 Respiratory CPGs adjust breathing frequency across rest, exercise, and emotional states while preserving precise timing among respiratory muscles \cite{DelNegro2018}.
 In each case, the circuit must balance stability against flexibility---precisely the trade-off that slow synaptic dynamics appear well-suited to mediate.
-The neuromodulatory targeting of presynaptic release machinery, rather than postsynaptic conductances, may represent a general strategy for achieving smooth, reversible frequency control across these systems \cite{NadimBucher2014}.
+Neuromodulatory control over synaptic transmission may therefore represent a general strategy for achieving reversible frequency control across these systems \cite{NadimBucher2014}.
 
 Our findings suggest that understanding the temporal structure of synaptic transmission, not merely its strength, may be essential for deciphering how neuromodulators sculpt behavior.
 

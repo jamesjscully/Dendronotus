@@ -17,18 +17,17 @@ Si1 provides excitatory drive to both Si3 neurons and also modulates the Si3$\to
 Beyond gating network activity, Si1 neurons regulate burst frequency in an activity-dependent manner.
 Experimental recordings demonstrate that swim frequency increases with Si1 firing rate, establishing that the command signal encodes not merely on/off state but graded frequency information \cite{sakurai2019command}.
 This observation motivates our exploration of how neuromodulation of synaptic properties in the Si3$\to$Si2 excitatory pathway could implement such graded control.
-We compared two distinct mechanisms: presynaptic modulation of the logistic Si3$\to$Si2 accumulation-rate parameter $\alpha$, and postsynaptic modulation of the maximal effective conductance in the same pathway.
+We defined a dimensionless modulatory gain parameter, $g_m$, and compared two distinct ways in which that same gain could act within the Si3$\to$Si2 excitatory pathway: presynaptic modulation of the logistic accumulation-rate parameter $\alpha$, and postsynaptic modulation of the maximal effective conductance in the same pathway.
 
 Figure~\ref{fig:si1_neuromod}B compares the biological Si1-rate versus burst-rate relationship with matched measurements extracted from representative model traces.
-Both model variants capture the positive relationship between command-neuron firing and burst frequency, but the presynaptic model occupies the biological range more naturally across successive burst intervals, whereas the postsynaptic model is compressed toward higher burst frequencies for a broad range of Si1 firing rates.
+Both model variants capture the positive relationship between command-neuron firing and burst frequency, while differing in how that relationship is distributed across successive burst intervals.
 
-Figure~\ref{fig:si1_neuromod}C shows the full gain scan during ongoing drive.
-Presynaptic modulation produces a broader and smoother increase in burst frequency as gain increases.
-Postsynaptic modulation also increases burst frequency, but the response is flatter over substantial parts of the scan and reaches a comparatively narrow high-frequency band.
-Thus, both mechanisms can tune the active rhythm, but presynaptic modulation provides a more graded control landscape.
+Figure~\ref{fig:si1_neuromod}C shows the full scan of the gain parameter $g_m$ during ongoing drive.
+In both mechanisms, increasing gain shifts the burst frequency upward, but the two modulation targets produce different gain-to-frequency curves.
+Thus, both mechanisms can tune the active rhythm during sustained drive, while differing in the detailed shape of the control relationship.
 
-Figure~\ref{fig:si1_neuromod}E shows representative biological and model traces.
+Figure~\ref{fig:si1_neuromod}D shows representative biological and model traces.
 The biological recording establishes the empirical relationship between elevated Si1 firing and Si2 bursting, while the two model traces illustrate how the same Si1 drive can be translated into different burst statistics depending on whether modulation acts on release kinetics or effective conductance.
 
-Taken together, these results support a restrained conclusion: Si1-mediated modulation of the Si3$\to$Si2 pathway is sufficient to regulate burst frequency during active swimming, and modulation of synaptic kinetics provides the closer match to the observed graded Si1-to-burst relationship.
-This generates a testable prediction that pharmacological manipulations targeting presynaptic release machinery should produce smoother frequency tuning than manipulations acting primarily on postsynaptic conductance.
+Taken together, these results support a restrained conclusion: Si1-mediated modulation of the Si3$\to$Si2 pathway is sufficient to regulate burst frequency during active swimming, and either presynaptic or postsynaptic implementation of that modulation can reproduce gain-dependent changes in the active rhythm.
+The present comparison therefore establishes a plausible control mechanism and a framework for experiment, rather than a definitive claim that one modulatory locus is the uniquely correct biological explanation.
